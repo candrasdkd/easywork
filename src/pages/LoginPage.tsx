@@ -7,35 +7,36 @@ import {
     Typography,
     Divider,
     Stack,
+    TextField,
+    Button,
     IconButton,
+    InputAdornment,
+    Link,
     Tooltip,
 } from '@mui/material'
+import Visibility from '@mui/icons-material/Visibility'
+import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import { useLocation, useNavigate } from 'react-router'
-import GoogleLoginButton from '../components/GoogleLoginButton' // asumsi sudah ada
-import { finishGoogleRedirect } from '../lib/firebase'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContext' // asumsi sudah ada (provider yang expose "user")
+import { signInWithEmail, signUpWithEmail, sendResetPassword } from '../lib/firebase'
 
-function useInAppBrowserHint() {
-    const [inAppHint, setInAppHint] = React.useState(false)
-    React.useEffect(() => {
-        const ua = navigator.userAgent || ''
-        const isInApp =
-            /\bFBAN|FBAV|Instagram|Line\/|FB_IAB|Twitter|TikTok|VkShare|Pinterest|WeChat|Messenger\b/i.test(
-                ua
-            )
-        setInAppHint(isInApp)
-    }, [])
-    return inAppHint
-}
+type Mode = 'login' | 'register'
 
 export default function Login() {
     const { user } = useAuth()
     const loc = useLocation()
     const navigate = useNavigate()
+
+    const [mode, setMode] = React.useState<Mode>('login')
+    const [email, setEmail] = React.useState('')
+    const [password, setPassword] = React.useState('')
+    const [displayName, setDisplayName] = React.useState('')
+    const [showPassword, setShowPassword] = React.useState(false)
+    const [loading, setLoading] = React.useState(false)
     const [error, setError] = React.useState<string | null>(null)
-    const inAppHint = useInAppBrowserHint()
+    const [success, setSuccess] = React.useState<string | null>(null)
 
     // Redirect kalau sudah login
     React.useEffect(() => {
@@ -45,21 +46,56 @@ export default function Login() {
         }
     }, [user, loc.state, navigate])
 
-    // Selesaikan redirect dari Google
-    React.useEffect(() => {
-        finishGoogleRedirect()
-            .then((cred) => {
-                if (cred?.user) {
-                    const to = (loc.state as any)?.from?.pathname || '/'
-                    navigate(to, { replace: true })
-                }
-            })
-            .catch((e: any) =>
-                setError(e?.message ?? 'Gagal menyelesaikan login.')
-            )
-        // hanya dipanggil sekali saat mount
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    // Simple validation
+    const emailErr = email && !/^\S+@\S+\.\S+$/.test(email) ? 'Format email tidak valid' : ''
+    const pwdErr =
+        password && password.length < 6 ? 'Minimal 6 karakter' : ''
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault()
+        setError(null)
+        setSuccess(null)
+
+        if (!email) return setError('Email wajib diisi.')
+        if (emailErr) return setError(emailErr)
+        if (!password) return setError('Password wajib diisi.')
+        if (pwdErr) return setError(pwdErr)
+
+        setLoading(true)
+        try {
+            if (mode === 'login') {
+                await signInWithEmail({ email, password })
+                const to = (loc.state as any)?.from?.pathname || '/'
+                navigate(to, { replace: true })
+            } else {
+                await signUpWithEmail({ email, password, displayName: displayName || undefined })
+                setSuccess('Pendaftaran berhasil. Kamu sudah masuk.')
+                const to = (loc.state as any)?.from?.pathname || '/'
+                navigate(to, { replace: true })
+            }
+        } catch (e: any) {
+            setError(e?.message ?? 'Terjadi kesalahan.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    async function handleReset() {
+        setError(null)
+        setSuccess(null)
+        if (!email) return setError('Masukkan email untuk reset password.')
+        if (emailErr) return setError(emailErr)
+
+        setLoading(true)
+        try {
+            await sendResetPassword(email)
+            setSuccess('Link reset password telah dikirim ke email kamu.')
+        } catch (e: any) {
+            setError(e?.message ?? 'Gagal mengirim link reset password.')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <Box
@@ -89,17 +125,11 @@ export default function Login() {
                         borderRadius: '9999px',
                     },
                     '&::before': {
-                        width: 280,
-                        height: 280,
-                        top: 80,
-                        left: 80,
+                        width: 280, height: 280, top: 80, left: 80,
                         background: 'linear-gradient(45deg, #6366F1, #22D3EE)',
                     },
                     '&::after': {
-                        width: 320,
-                        height: 320,
-                        bottom: 60,
-                        right: 80,
+                        width: 320, height: 320, bottom: 60, right: 80,
                         background: 'linear-gradient(45deg, #F472B6, #F59E0B)',
                     },
                 }}
@@ -109,7 +139,7 @@ export default function Login() {
                 elevation={0}
                 sx={{
                     width: '100%',
-                    maxWidth: 880,
+                    maxWidth: 560,
                     borderRadius: 4,
                     overflow: 'hidden',
                     backdropFilter: 'blur(10px)',
@@ -121,34 +151,21 @@ export default function Login() {
                         t.palette.mode === 'dark'
                             ? '0 10px 40px rgba(0,0,0,0.55)'
                             : '0 10px 40px rgba(31,41,55,0.16)',
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', md: '1.1fr 0.9fr' },
                 }}
             >
-                {/* Left / Form */}
                 <Box sx={{ p: { xs: 3, md: 5 } }}>
-                    {/* Brand / Header */}
-                    <Stack
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
-                        sx={{ mb: 2 }}
-                    >
+                    {/* Header */}
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
                         <Stack direction="row" spacing={1.5} alignItems="center">
                             <Box
                                 sx={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: 2,
+                                    width: 40, height: 40, borderRadius: 2,
                                     background: (t) =>
                                         t.palette.mode === 'dark'
                                             ? 'linear-gradient(45deg, #6366F1, #22D3EE)'
                                             : 'linear-gradient(45deg, #4F46E5, #06B6D4)',
-                                    display: 'grid',
-                                    placeItems: 'center',
-                                    color: '#fff',
-                                    fontWeight: 800,
-                                    fontSize: 18,
+                                    display: 'grid', placeItems: 'center',
+                                    color: '#fff', fontWeight: 800, fontSize: 18,
                                 }}
                             >
                                 E
@@ -158,7 +175,6 @@ export default function Login() {
                             </Typography>
                         </Stack>
 
-                        {/* Theme hint (opsional) */}
                         <Tooltip title="Ikuti toggle tema di navbar utama">
                             <span>
                                 <IconButton disabled size="small">
@@ -170,113 +186,122 @@ export default function Login() {
                     </Stack>
 
                     <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1.2, mb: 1 }}>
-                        Selamat datang kembali
+                        {mode === 'login' ? 'Masuk' : 'Daftar akun baru'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Masuk untuk melanjutkan aktivitasmu. Hanya butuh satu klik dengan akun Google.
+                        {mode === 'login'
+                            ? 'Gunakan email & password untuk masuk.'
+                            : 'Isi data di bawah untuk membuat akun baru.'}
                     </Typography>
 
-                    {inAppHint && (
-                        <Alert severity="info" sx={{ mb: 2 }}>
-                            Sepertinya Anda membuka dari browser dalam aplikasi (mis. Instagram/FB).
-                            Login Google sering tidak didukung di sini. Tap menu ⋯ lalu pilih
-                            <b> Open in Chrome/Safari</b>, kemudian coba lagi.
-                        </Alert>
-                    )}
+                    {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                    {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
+                    <Box component="form" onSubmit={handleSubmit} noValidate>
+                        <Stack spacing={2.2}>
+                            {mode === 'register' && (
+                                <TextField
+                                    label="Nama"
+                                    value={displayName}
+                                    onChange={(e) => setDisplayName(e.target.value)}
+                                    autoComplete="name"
+                                    fullWidth
+                                />
+                            )}
 
-                    <Stack spacing={2}>
-                        <GoogleLoginButton
-                            onError={setError}
-                            onSuccess={() => {
-                                const to = (loc.state as any)?.from?.pathname || '/'
-                                navigate(to, { replace: true })
-                            }}
-                        />
-                        <Divider flexItem>atau</Divider>
+                            <TextField
+                                label="Email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                autoComplete="email"
+                                fullWidth
+                                error={!!email && !!emailErr}
+                                helperText={email && emailErr ? emailErr : ' '}
+                            />
 
-                        <Box
-                            sx={{
-                                fontSize: 12,
-                                color: 'text.secondary',
-                                textAlign: 'center',
-                            }}
-                        >
-                            Dengan masuk, Anda menyetujui{' '}
-                            <Box component="span" sx={{ fontWeight: 600 }}>
-                                Ketentuan Layanan
-                            </Box>{' '}
-                            &{' '}
-                            <Box component="span" sx={{ fontWeight: 600 }}>
-                                Kebijakan Privasi
-                            </Box>.
-                        </Box>
-                    </Stack>
-                </Box>
+                            <TextField
+                                label="Password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                                fullWidth
+                                error={!!password && !!pwdErr}
+                                helperText={password && pwdErr ? pwdErr : ' '}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                onClick={() => setShowPassword((v) => !v)}
+                                                edge="end"
+                                                aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                                            >
+                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
 
-                {/* Right / Visual */}
-                <Box
-                    sx={{
-                        display: { xs: 'none', md: 'flex' },
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        background: (t) =>
-                            t.palette.mode === 'dark'
-                                ? 'linear-gradient(180deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1))'
-                                : 'linear-gradient(180deg, rgba(99,102,241,0.12), rgba(236,72,153,0.08))',
-                    }}
-                >
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            inset: 0,
-                            background:
-                                'radial-gradient(40rem 24rem at 80% 20%, rgba(99,102,241,0.25), transparent), radial-gradient(32rem 24rem at 20% 80%, rgba(236,72,153,0.22), transparent)',
-                            opacity: 0.8,
-                        }}
-                    />
-                    <Stack sx={{ px: 6, py: 8, position: 'relative' }} spacing={2} alignItems="center">
-                        <Typography variant="h5" sx={{ fontWeight: 800, textAlign: 'center' }}>
-                            Satu klik untuk produktif
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" textAlign="center">
-                            Login cepat dengan Google, aman dan tanpa ribet. Data Anda tersimpan dengan baik.
-                        </Typography>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                size="large"
+                                disableElevation
+                                disabled={loading}
+                            >
+                                {loading ? (mode === 'login' ? 'Memproses...' : 'Mendaftarkan...') : (mode === 'login' ? 'Masuk' : 'Daftar')}
+                            </Button>
 
-                        <Box
-                            sx={{
-                                mt: 2,
-                                width: '100%',
-                                maxWidth: 360,
-                                aspectRatio: '4/3',
-                                borderRadius: 4,
-                                border: (t) =>
-                                    t.palette.mode === 'dark'
-                                        ? '1px solid rgba(255,255,255,0.08)'
-                                        : '1px solid rgba(0,0,0,0.06)',
-                                backdropFilter: 'blur(6px)',
-                                boxShadow: (t) =>
-                                    t.palette.mode === 'dark'
-                                        ? '0 12px 40px rgba(0,0,0,0.55)'
-                                        : '0 12px 40px rgba(31,41,55,0.14)',
-                                display: 'grid',
-                                placeItems: 'center',
-                                fontSize: 28,
-                                fontWeight: 800,
-                                letterSpacing: 0.5,
-                                color: 'text.secondary',
-                            }}
-                        >
-                            LOGIN • UI
-                        </Box>
-                    </Stack>
+                            {mode === 'login' && (
+                                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                    <Link
+                                        component="button"
+                                        type="button"
+                                        onClick={handleReset}
+                                        disabled={loading}
+                                        underline="hover"
+                                    >
+                                        Lupa sandi?
+                                    </Link>
+                                    <Link
+                                        component="button"
+                                        type="button"
+                                        onClick={() => {
+                                            setMode('register')
+                                            setError(null); setSuccess(null)
+                                        }}
+                                        underline="hover"
+                                    >
+                                        Buat akun baru
+                                    </Link>
+                                </Stack>
+                            )}
+
+                            {mode === 'register' && (
+                                <Stack direction="row" justifyContent="flex-end">
+                                    <Link
+                                        component="button"
+                                        type="button"
+                                        onClick={() => {
+                                            setMode('login')
+                                            setError(null); setSuccess(null)
+                                        }}
+                                        underline="hover"
+                                    >
+                                        Sudah punya akun? Masuk
+                                    </Link>
+                                </Stack>
+                            )}
+
+                            <Divider />
+
+                            <Typography variant="caption" color="text.secondary" textAlign="center">
+                                Dengan masuk/daftar, Anda menyetujui <b>Ketentuan Layanan</b> & <b>Kebijakan Privasi</b>.
+                            </Typography>
+                        </Stack>
+                    </Box>
                 </Box>
             </Paper>
         </Box>

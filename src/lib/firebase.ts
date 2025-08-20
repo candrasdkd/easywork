@@ -2,16 +2,22 @@
 import { initializeApp, getApp, getApps } from 'firebase/app'
 import {
     getAuth,
-    GoogleAuthProvider,
-    signInWithPopup,
-    signInWithRedirect,
-    getRedirectResult,
     setPersistence,
     browserLocalPersistence,
     browserSessionPersistence,
     inMemoryPersistence,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    sendPasswordResetEmail,
+    signOut as fbSignOut,
+    updateProfile,
+    sendEmailVerification as fbSendEmailVerification,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
+    updatePassword as fbUpdatePassword,
+    type User,
 } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
@@ -23,84 +29,109 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
-// HMR-safe init
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
-
-// Core SDKs
 export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const storage = getStorage(app)
-
-// Bahasa (untuk UI OTP/Email link, dsb.)
 auth.languageCode = 'id'
 
-// ===== Persistence fallback: local → session → memory =====
+// Persistence fallback
 async function setupPersistence() {
-    try {
-        await setPersistence(auth, browserLocalPersistence)
-    } catch {
-        try {
-            await setPersistence(auth, browserSessionPersistence)
-        } catch {
-            await setPersistence(auth, inMemoryPersistence)
-        }
+    try { await setPersistence(auth, browserLocalPersistence) }
+    catch {
+        try { await setPersistence(auth, browserSessionPersistence) }
+        catch { await setPersistence(auth, inMemoryPersistence) }
     }
 }
 void setupPersistence()
 
-// ===== Google Auth Provider =====
-export const googleProvider = new GoogleAuthProvider()
-// Opsional: paksa pilih akun setiap login
-googleProvider.setCustomParameters({ prompt: 'select_account' })
-
-// ===== Detector environment (mobile / in-app browser) =====
-function getEnvFlags() {
-    const ua = navigator.userAgent || ''
-    const isIOS = /iPhone|iPad|iPod/i.test(ua)
-    const isAndroid = /Android/i.test(ua)
-    const isMobile = isIOS || isAndroid
-    const isInAppBrowser =
-        /\bFBAN|FBAV|Instagram|Line\/|FB_IAB|Twitter|TikTok|VkShare|Pinterest|WeChat|Messenger\b/i.test(
-            ua
-        )
-    return { isIOS, isAndroid, isMobile, isInAppBrowser }
-}
-
-/**
- * Login Google: otomatis pakai redirect di mobile/in-app browser
- * dan fallback ke redirect untuk error popup umum.
- */
-export async function signInWithGoogle() {
-    const { isMobile, isInAppBrowser } = getEnvFlags()
-
-    try {
-        if (isMobile || isInAppBrowser) {
-            await signInWithRedirect(auth, googleProvider)
-            return null
-        }
-        const cred = await signInWithPopup(auth, googleProvider)
-        return cred.user
-    } catch (e: any) {
-        const code = e?.code || ''
-        const mustRedirect = [
-            'auth/popup-blocked',
-            'auth/popup-closed-by-user',
-            'auth/operation-not-supported-in-this-environment',
-            'auth/internal-error',
-        ].includes(code)
-
-        if (mustRedirect) {
-            await signInWithRedirect(auth, googleProvider)
-            return null
-        }
-        throw e
+// ===== Error map (singkat) =====
+function mapAuthError(code?: string): string {
+    switch (code) {
+        case 'auth/invalid-email': return 'Email tidak valid.'
+        case 'auth/missing-password': return 'Password wajib diisi.'
+        case 'auth/weak-password': return 'Password terlalu lemah (≥6 karakter).'
+        case 'auth/email-already-in-use': return 'Email sudah terdaftar.'
+        case 'auth/user-not-found':
+        case 'auth/invalid-credential': return 'Email atau password salah.'
+        case 'auth/wrong-password': return 'Password salah.'
+        case 'auth/too-many-requests': return 'Terlalu banyak percobaan. Coba lagi nanti.'
+        default: return 'Terjadi kesalahan. Coba lagi.'
     }
 }
 
-/**
- * Panggil sekali di halaman login untuk menyelesaikan alur redirect sign-in.
- * Mengembalikan Promise<UserCredential|null>
- */
-export function finishGoogleRedirect() {
-    return getRedirectResult(auth)
+// ===== Profile sync helpers =====
+/** Upsert dokumen users/{uid} setelah login/daftar */
+export async function upsertUserProfile(u: User) {
+    const ref = doc(db, 'users', u.uid)
+    const providerId = u.providerData?.[0]?.providerId ?? 'password'
+    const payload = {
+        uuid_account: u.uid,
+        email: u.email ?? null,
+        display_name: u.displayName ?? null,
+        photo_url: u.photoURL ?? null,
+        email_verified: u.emailVerified ?? false,
+        provider_id: providerId,
+        last_login_at: serverTimestamp(),
+        // created_at: hanya set pertama kali, tapi setDoc merge tidak akan merusak jika sudah ada
+        created_at: serverTimestamp(),
+    }
+    await setDoc(ref, payload, { merge: true })
+}
+
+/** Update displayName ke Auth & Firestore */
+export async function updateDisplayName(u: User, displayName: string) {
+    await updateProfile(u, { displayName })
+    const ref = doc(db, 'users', u.uid)
+    await setDoc(ref, { display_name: displayName }, { merge: true })
+}
+
+/** Kirim email verifikasi */
+export async function sendEmailVerification() {
+    if (!auth.currentUser) throw new Error('Tidak ada user yang login.')
+    await fbSendEmailVerification(auth.currentUser)
+}
+
+/** Ganti password (minta password lama untuk reauth) */
+export async function updatePasswordWithReauth(email: string, oldPwd: string, newPwd: string) {
+    if (!auth.currentUser) throw new Error('Tidak ada user yang login.')
+    const cred = EmailAuthProvider.credential(email, oldPwd)
+    await reauthenticateWithCredential(auth.currentUser, cred)
+    await fbUpdatePassword(auth.currentUser, newPwd)
+}
+
+// ===== Email/Password auth APIs =====
+export async function signUpWithEmail(params: { email: string; password: string; displayName?: string }) {
+    const { email, password, displayName } = params
+    try {
+        const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
+        if (displayName) await updateProfile(cred.user, { displayName })
+        await upsertUserProfile(cred.user)
+        return cred.user
+    } catch (e: any) {
+        throw new Error(mapAuthError(e?.code))
+    }
+}
+
+export async function signInWithEmail(params: { email: string; password: string }) {
+    const { email, password } = params
+    try {
+        const cred = await signInWithEmailAndPassword(auth, email.trim(), password)
+        await upsertUserProfile(cred.user)
+        return cred.user
+    } catch (e: any) {
+        throw new Error(mapAuthError(e?.code))
+    }
+}
+
+export async function sendResetPassword(email: string) {
+    try {
+        await sendPasswordResetEmail(auth, email.trim())
+    } catch (e: any) {
+        throw new Error(mapAuthError(e?.code))
+    }
+}
+
+export async function signOut() {
+    await fbSignOut(auth)
 }
