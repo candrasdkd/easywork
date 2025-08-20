@@ -2,29 +2,43 @@ import {
     Card,
     CardContent,
     Typography,
-    Grid,
     Box,
+    Grid,
     CardHeader,
     Avatar,
     useTheme,
     Skeleton,
     Tooltip,
     Fab,
+    Paper,
+    Alert,
     TextField,
     MenuItem,
-    Paper,
 } from "@mui/material";
+
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import PlaceIcon from "@mui/icons-material/Place";
 import ShareIcon from "@mui/icons-material/Share";
+import RefreshIcon from "@mui/icons-material/Refresh";
+
 import copy from "copy-to-clipboard";
+import { Dayjs } from "dayjs";
+import "dayjs/locale/id";
 import { useMemo, useState } from "react";
 import type { CalibrationItem } from "../pages/DashboardPage";
 
 interface DashboardProps {
     items: CalibrationItem[];
     loading: boolean;
+    selectedMonth: Dayjs;
+    onMonthChange: (m: Dayjs) => void;
+    error?: Error | null;
+    onRefresh?: () => void;
 }
 
 const uniqueSorted = (arr: string[]) =>
@@ -32,64 +46,42 @@ const uniqueSorted = (arr: string[]) =>
         a.localeCompare(b, "id")
     );
 
-const todayLocalStr = () => {
-    const t = new Date();
-    const yyyy = t.getFullYear();
-    const mm = String(t.getMonth() + 1).padStart(2, "0");
-    const dd = String(t.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`; // yyyy-mm-dd (lokal)
-};
-const firstDayOfThisMonthStr = () => {
-    const t = new Date();
-    const yyyy = t.getFullYear();
-    const mm = String(t.getMonth() + 1).padStart(2, "0");
-    return `${yyyy}-${mm}-01`;
-};
-
-export default function Dashboard({ loading, items }: DashboardProps) {
+export default function Dashboard({
+    loading,
+    items,
+    selectedMonth,
+    onMonthChange,
+    error,
+    onRefresh,
+}: DashboardProps) {
     const theme = useTheme();
-    // ================= Filters =================
-    const [room, setRoom] = useState<string>("");
-    const [dateFrom, setDateFrom] = useState<string>(firstDayOfThisMonthStr());
-    const [dateTo, setDateTo] = useState<string>(todayLocalStr());
 
+    // === Filter Ruangan (client-side) ===
     const allRooms = useMemo(
         () => uniqueSorted(items.map((i) => i.room_name || "")),
         [items]
     );
+    const [room, setRoom] = useState<string>("");
+
     const filtered = useMemo(() => {
-        const from = dateFrom ? new Date(dateFrom + "T00:00:00") : null;
-        const to = dateTo ? new Date(dateTo + "T23:59:59.999") : null;
-
-        return items.filter((it) => {
-            if (room && (it.room_name || "") !== room) return false;
-
-            if (from || to) {
-                const d = it.implementation_date;
-                if (!d) return false;
-                if (from && d < from) return false;
-                if (to && d > to) return false;
-            }
-
-            return true;
-        });
-    }, [items, room, dateFrom, dateTo]);
-
+        if (!room) return items;
+        return items.filter((it) => (it.room_name || "") === room);
+    }, [items, room]);
 
     const totalItems = filtered.length;
-    const totalRooms = uniqueSorted(filtered.map((i) => i.room_name || "")).length;
+    const totalRooms = useMemo(
+        () => uniqueSorted(filtered.map((i) => i.room_name || "")).length,
+        [filtered]
+    );
 
-    // ================ Share/Copy/CSV ================
     const generateSummaryText = () => {
-        let txt = `🧪 *LAPORAN KALIBRASI PERALATAN (Filtered)*\n\n`;
-        txt += `🎛 Filter: `;
-        const parts = [];
-        if (room) parts.push(`ruangan="${room}"`);
-        if (dateFrom) parts.push(`dari=${dateFrom}`);
-        if (dateTo) parts.push(`sampai=${dateTo}`);
-        txt += parts.length ? parts.join(", ") : "—";
-        txt += `\n\n📌 *DATA UTAMA*\n`;
+        const bulanStr = selectedMonth.format("MMMM YYYY");
+        let txt = `🧪 *LAPORAN KALIBRASI PERALATAN*\n\n`;
+        txt += `🗓 Periode: *${bulanStr}*\n`;
+        if (room) txt += `🏢 Ruangan: *${room}*\n`;
+        txt += `\n📌 *DATA UTAMA*\n`;
         txt += `▫️ Total Inputan: *${totalItems}*\n`;
+        txt += `▫️ Total Ruangan: *${totalRooms}*\n`;
         return txt;
     };
 
@@ -109,10 +101,24 @@ export default function Dashboard({ loading, items }: DashboardProps) {
                 Dashboard Kalibrasi
             </Typography>
 
-            {/* ======== Filter Bar (RESPONSIVE) ======== */}
+            {/* Filter Bulan + Ruangan */}
             <Paper sx={{ p: 2, mb: 3, borderRadius: 3 }}>
                 <Grid container spacing={1.5} alignItems="center">
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                            <DatePicker
+                                label="Filter Bulan"
+                                views={["year", "month"]}
+                                openTo="month"
+                                value={selectedMonth}
+                                format="MMMM YYYY"
+                                onChange={(v) => v && onMonthChange(v)}
+                                slotProps={{ textField: { size: "small", fullWidth: true } }}
+                            />
+                        </LocalizationProvider>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <TextField
                             size="small"
                             fullWidth
@@ -130,31 +136,21 @@ export default function Dashboard({ loading, items }: DashboardProps) {
                         </TextField>
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <TextField
-                            size="small"
-                            fullWidth
-                            label="Dari Tanggal"
-                            type="date"
-                            InputLabelProps={{ shrink: true }}
-                            value={dateFrom}
-                            onChange={(e) => setDateFrom(e.target.value)}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <TextField
-                            size="small"
-                            fullWidth
-                            label="Sampai Tanggal"
-                            type="date"
-                            InputLabelProps={{ shrink: true }}
-                            value={dateTo}
-                            onChange={(e) => setDateTo(e.target.value)}
-                        />
+                    <Grid size={{ xs: 'auto' }}>
+                        <Tooltip title="Refresh data">
+                            <Fab size="small" color="default" onClick={onRefresh}>
+                                <RefreshIcon />
+                            </Fab>
+                        </Tooltip>
                     </Grid>
                 </Grid>
             </Paper>
 
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error.message || "Terjadi kesalahan saat memuat data."}
+                </Alert>
+            )}
 
             {loading ? (
                 <Grid container spacing={3}>
@@ -167,7 +163,7 @@ export default function Dashboard({ loading, items }: DashboardProps) {
             ) : (
                 <>
                     <Grid container spacing={3}>
-                        {/* Total Alat */}
+                        {/* Total Inputan */}
                         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <Card
                                 sx={{
@@ -203,6 +199,7 @@ export default function Dashboard({ loading, items }: DashboardProps) {
                                 </CardContent>
                             </Card>
                         </Grid>
+
                         {/* Total Ruangan */}
                         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <Card
@@ -226,7 +223,12 @@ export default function Dashboard({ loading, items }: DashboardProps) {
                                     titleTypographyProps={{ fontWeight: "bold", fontSize: "1.1rem" }}
                                 />
                                 <CardContent
-                                    sx={{ flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center" }}
+                                    sx={{
+                                        flexGrow: 1,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
                                 >
                                     <Typography variant="h2" fontWeight="bold">
                                         {totalRooms}
@@ -236,7 +238,7 @@ export default function Dashboard({ loading, items }: DashboardProps) {
                         </Grid>
                     </Grid>
 
-                    {/* Floating Action Buttons */}
+                    {/* FABs */}
                     <Box
                         sx={{
                             position: "fixed",
