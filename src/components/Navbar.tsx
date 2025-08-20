@@ -2,7 +2,12 @@ import * as React from 'react';
 import {
     AppBar, Box, CssBaseline, Divider, Drawer, IconButton,
     List, ListItem, ListItemButton, ListItemText,
-    Toolbar, Button, Avatar, Menu, MenuItem, Typography
+    Toolbar, Button, Avatar, Menu, MenuItem, Typography,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -33,7 +38,7 @@ export default function DrawerAppBar(props: { window?: () => Window }) {
     const { window } = props;
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const { mode, toggleColorMode } = useThemeMode();
-
+    const [openConfirm, setOpenConfirm] = React.useState(false);
     // === Auth state ===
     const [user, setUser] = React.useState<User | null>(auth.currentUser ?? null);
     React.useEffect(() => {
@@ -54,6 +59,9 @@ export default function DrawerAppBar(props: { window?: () => Window }) {
         handleCloseAccountMenu();
         navigate('/profile');
     };
+
+    const handleOpenConfirm = () => setOpenConfirm(true);
+    const handleCloseConfirm = () => setOpenConfirm(false);
 
     const handleLogout = async () => {
         try {
@@ -166,7 +174,6 @@ export default function DrawerAppBar(props: { window?: () => Window }) {
                             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
-                            {/* Header mini di menu (nama & email) */}
                             {user && (
                                 <Box sx={{ px: 2, pt: 1, pb: 1 }}>
                                     <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -178,10 +185,30 @@ export default function DrawerAppBar(props: { window?: () => Window }) {
                                 </Box>
                             )}
                             <Divider />
-
                             <MenuItem onClick={handleGoProfile}>Profil</MenuItem>
-                            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                            <MenuItem onClick={handleOpenConfirm}>Logout</MenuItem>
                         </Menu>
+
+                        {/* === Konfirmasi Logout === */}
+                        <Dialog
+                            open={openConfirm}
+                            onClose={handleCloseConfirm}
+                            aria-labelledby="logout-dialog-title"
+                            aria-describedby="logout-dialog-description"
+                        >
+                            <DialogTitle id="logout-dialog-title">Konfirmasi Logout</DialogTitle>
+                            <DialogContent>
+                                <DialogContentText id="logout-dialog-description">
+                                    Apakah Anda yakin ingin keluar dari aplikasi?
+                                </DialogContentText>
+                            </DialogContent>
+                            <DialogActions>
+                                <Button onClick={handleCloseConfirm}>Batal</Button>
+                                <Button onClick={handleLogout} color="error" variant="contained" autoFocus>
+                                    Ya, Logout
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
                     </Box>
                 </Toolbar>
             </AppBar>
