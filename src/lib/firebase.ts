@@ -8,6 +8,8 @@ import {
     getRedirectResult,
     setPersistence,
     browserLocalPersistence,
+    browserSessionPersistence,
+    inMemoryPersistence,
 } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
@@ -21,7 +23,7 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
-// HMR-safe
+// HMR-safe init
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 
 // Core SDKs
@@ -29,30 +31,65 @@ export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const storage = getStorage(app)
 
-// Persist login di browser (local) — abaikan promise
-void setPersistence(auth, browserLocalPersistence)
-auth.languageCode = 'id' // optional, untuk UI OTP/Email link, dsb.
+// Bahasa (untuk UI OTP/Email link, dsb.)
+auth.languageCode = 'id'
 
-// === Google Auth ===
+// ===== Persistence fallback: local → session → memory =====
+async function setupPersistence() {
+    try {
+        await setPersistence(auth, browserLocalPersistence)
+    } catch {
+        try {
+            await setPersistence(auth, browserSessionPersistence)
+        } catch {
+            await setPersistence(auth, inMemoryPersistence)
+        }
+    }
+}
+void setupPersistence()
+
+// ===== Google Auth Provider =====
 export const googleProvider = new GoogleAuthProvider()
 // Opsional: paksa pilih akun setiap login
 googleProvider.setCustomParameters({ prompt: 'select_account' })
 
+// ===== Detector environment (mobile / in-app browser) =====
+function getEnvFlags() {
+    const ua = navigator.userAgent || ''
+    const isIOS = /iPhone|iPad|iPod/i.test(ua)
+    const isAndroid = /Android/i.test(ua)
+    const isMobile = isIOS || isAndroid
+    const isInAppBrowser =
+        /\bFBAN|FBAV|Instagram|Line\/|FB_IAB|Twitter|TikTok|VkShare|Pinterest|WeChat|Messenger\b/i.test(
+            ua
+        )
+    return { isIOS, isAndroid, isMobile, isInAppBrowser }
+}
+
 /**
- * Login Google: otomatis fallback ke redirect kalau popup diblokir
+ * Login Google: otomatis pakai redirect di mobile/in-app browser
+ * dan fallback ke redirect untuk error popup umum.
  */
 export async function signInWithGoogle() {
+    const { isMobile, isInAppBrowser } = getEnvFlags()
+
     try {
-        // Mobile Safari / PWA kadang butuh redirect
-        const isLikelyMobileSafari = /iPhone|iPad|iPod/.test(navigator.userAgent)
-        if (isLikelyMobileSafari) {
+        if (isMobile || isInAppBrowser) {
             await signInWithRedirect(auth, googleProvider)
             return null
         }
         const cred = await signInWithPopup(auth, googleProvider)
         return cred.user
     } catch (e: any) {
-        if (e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user') {
+        const code = e?.code || ''
+        const mustRedirect = [
+            'auth/popup-blocked',
+            'auth/popup-closed-by-user',
+            'auth/operation-not-supported-in-this-environment',
+            'auth/internal-error',
+        ].includes(code)
+
+        if (mustRedirect) {
             await signInWithRedirect(auth, googleProvider)
             return null
         }
@@ -61,9 +98,9 @@ export async function signInWithGoogle() {
 }
 
 /**
- * Panggil ini sekali di halaman yang menerima redirect result (mis. /login)
- * untuk menyelesaikan alur redirect sign-in.
+ * Panggil sekali di halaman login untuk menyelesaikan alur redirect sign-in.
+ * Mengembalikan Promise<UserCredential|null>
  */
 export function finishGoogleRedirect() {
-    return getRedirectResult(auth) // -> Promise<UserCredential|null>
+    return getRedirectResult(auth)
 }

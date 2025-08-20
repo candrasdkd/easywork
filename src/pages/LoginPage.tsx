@@ -1,4 +1,5 @@
-import * as React from 'react';
+// src/pages/Login.tsx
+import * as React from 'react'
 import {
     Alert,
     Box,
@@ -8,39 +9,57 @@ import {
     Stack,
     IconButton,
     Tooltip,
-} from '@mui/material';
-import GoogleLoginButton from '../components/GoogleLoginButton';
-import { finishGoogleRedirect } from '../lib/firebase';
-import { useAuth } from '../contexts/AuthContext';
-import { useLocation, useNavigate } from 'react-router';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
+} from '@mui/material'
+import LightModeIcon from '@mui/icons-material/LightMode'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
+import { useLocation, useNavigate } from 'react-router'
+import GoogleLoginButton from '../components/GoogleLoginButton' // asumsi sudah ada
+import { finishGoogleRedirect } from '../lib/firebase'
+import { useAuth } from '../contexts/AuthContext'
+
+function useInAppBrowserHint() {
+    const [inAppHint, setInAppHint] = React.useState(false)
+    React.useEffect(() => {
+        const ua = navigator.userAgent || ''
+        const isInApp =
+            /\bFBAN|FBAV|Instagram|Line\/|FB_IAB|Twitter|TikTok|VkShare|Pinterest|WeChat|Messenger\b/i.test(
+                ua
+            )
+        setInAppHint(isInApp)
+    }, [])
+    return inAppHint
+}
 
 export default function Login() {
-    const { user } = useAuth();
-    const loc = useLocation();
-    const navigate = useNavigate();
-    const [error, setError] = React.useState<string | null>(null);
+    const { user } = useAuth()
+    const loc = useLocation()
+    const navigate = useNavigate()
+    const [error, setError] = React.useState<string | null>(null)
+    const inAppHint = useInAppBrowserHint()
 
     // Redirect kalau sudah login
     React.useEffect(() => {
         if (user) {
-            const to = (loc.state as any)?.from?.pathname || '/';
-            navigate(to, { replace: true });
+            const to = (loc.state as any)?.from?.pathname || '/'
+            navigate(to, { replace: true })
         }
-    }, [user, loc.state, navigate]);
+    }, [user, loc.state, navigate])
 
     // Selesaikan redirect dari Google
     React.useEffect(() => {
         finishGoogleRedirect()
             .then((cred) => {
                 if (cred?.user) {
-                    const to = (loc.state as any)?.from?.pathname || '/';
-                    navigate(to, { replace: true });
+                    const to = (loc.state as any)?.from?.pathname || '/'
+                    navigate(to, { replace: true })
                 }
             })
-            .catch((e: any) => setError(e?.message ?? 'Gagal menyelesaikan login.'));
-    }, [loc.state, navigate]);
+            .catch((e: any) =>
+                setError(e?.message ?? 'Gagal menyelesaikan login.')
+            )
+        // hanya dipanggil sekali saat mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     return (
         <Box
@@ -48,12 +67,10 @@ export default function Login() {
                 minHeight: '100dvh',
                 display: 'grid',
                 placeItems: 'center',
-                // Gradient background yang adaptif ke theme
-                background:
-                    (theme) =>
-                        theme.palette.mode === 'dark'
-                            ? 'radial-gradient(60rem 60rem at 10% 10%, rgba(99,102,241,0.25), transparent), radial-gradient(50rem 50rem at 90% 90%, rgba(236,72,153,0.22), transparent), linear-gradient(160deg, #0b1020 0%, #111827 100%)'
-                            : 'radial-gradient(60rem 60rem at 10% 10%, rgba(99,102,241,0.25), transparent), radial-gradient(50rem 50rem at 90% 90%, rgba(236,72,153,0.18), transparent), linear-gradient(160deg, #f8fafc 0%, #eef2ff 100%)',
+                background: (theme) =>
+                    theme.palette.mode === 'dark'
+                        ? 'radial-gradient(60rem 60rem at 10% 10%, rgba(99,102,241,0.25), transparent), radial-gradient(50rem 50rem at 90% 90%, rgba(236,72,153,0.22), transparent), linear-gradient(160deg, #0b1020 0%, #111827 100%)'
+                        : 'radial-gradient(60rem 60rem at 10% 10%, rgba(99,102,241,0.25), transparent), radial-gradient(50rem 50rem at 90% 90%, rgba(236,72,153,0.18), transparent), linear-gradient(160deg, #f8fafc 0%, #eef2ff 100%)',
                 px: 2,
             }}
         >
@@ -72,13 +89,17 @@ export default function Login() {
                         borderRadius: '9999px',
                     },
                     '&::before': {
-                        width: 280, height: 280,
-                        top: 80, left: 80,
+                        width: 280,
+                        height: 280,
+                        top: 80,
+                        left: 80,
                         background: 'linear-gradient(45deg, #6366F1, #22D3EE)',
                     },
                     '&::after': {
-                        width: 320, height: 320,
-                        bottom: 60, right: 80,
+                        width: 320,
+                        height: 320,
+                        bottom: 60,
+                        right: 80,
                         background: 'linear-gradient(45deg, #F472B6, #F59E0B)',
                     },
                 }}
@@ -107,17 +128,26 @@ export default function Login() {
                 {/* Left / Form */}
                 <Box sx={{ p: { xs: 3, md: 5 } }}>
                     {/* Brand / Header */}
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                    <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        sx={{ mb: 2 }}
+                    >
                         <Stack direction="row" spacing={1.5} alignItems="center">
                             <Box
                                 sx={{
-                                    width: 40, height: 40, borderRadius: 2,
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 2,
                                     background: (t) =>
                                         t.palette.mode === 'dark'
                                             ? 'linear-gradient(45deg, #6366F1, #22D3EE)'
                                             : 'linear-gradient(45deg, #4F46E5, #06B6D4)',
-                                    display: 'grid', placeItems: 'center',
-                                    color: '#fff', fontWeight: 800,
+                                    display: 'grid',
+                                    placeItems: 'center',
+                                    color: '#fff',
+                                    fontWeight: 800,
                                     fontSize: 18,
                                 }}
                             >
@@ -146,6 +176,14 @@ export default function Login() {
                         Masuk untuk melanjutkan aktivitasmu. Hanya butuh satu klik dengan akun Google.
                     </Typography>
 
+                    {inAppHint && (
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                            Sepertinya Anda membuka dari browser dalam aplikasi (mis. Instagram/FB).
+                            Login Google sering tidak didukung di sini. Tap menu ⋯ lalu pilih
+                            <b> Open in Chrome/Safari</b>, kemudian coba lagi.
+                        </Alert>
+                    )}
+
                     {error && (
                         <Alert severity="error" sx={{ mb: 2 }}>
                             {error}
@@ -156,13 +194,12 @@ export default function Login() {
                         <GoogleLoginButton
                             onError={setError}
                             onSuccess={() => {
-                                const to = (loc.state as any)?.from?.pathname || '/';
-                                navigate(to, { replace: true });
+                                const to = (loc.state as any)?.from?.pathname || '/'
+                                navigate(to, { replace: true })
                             }}
                         />
                         <Divider flexItem>atau</Divider>
 
-                        {/* Placeholder tombol lain (opsional) */}
                         <Box
                             sx={{
                                 fontSize: 12,
@@ -243,5 +280,5 @@ export default function Login() {
                 </Box>
             </Paper>
         </Box>
-    );
+    )
 }
