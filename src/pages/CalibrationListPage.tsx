@@ -43,7 +43,7 @@ dayjs.locale('id');
 
 export type CalibrationItem = {
     id: string;
-    user_id?: string; // <-- NEW
+    user_id?: string;
     brand_name: string;
     capacity: string;
     implementation_date: Timestamp | Date | string | null;
@@ -75,6 +75,7 @@ const toDate = (value: CalibrationItem['implementation_date']) => {
     return value as Date;
 };
 
+// highlight pencarian
 const highlightMatch = (text: string | number | undefined | null, search: string) => {
     const source = String(text ?? '');
     if (!search) return source;
@@ -98,9 +99,7 @@ export default function CalibrationListPage() {
     const [allItems, setAllItems] = React.useState<CalibrationItem[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState<Error | null>(null);
-    // di atas, dekat state lain
     const [selectedMonth, setSelectedMonth] = React.useState(dayjs()); // default: bulan ini
-
 
     // Pagination (server-mode UX, but data paginated locally)
     const [paginationModel, setPaginationModel] = React.useState<GridPaginationModel>({
@@ -229,7 +228,6 @@ export default function CalibrationListPage() {
         }
     }, [uid, selectedMonth]);
 
-
     React.useEffect(() => { fetchItems(); }, [fetchItems]);
     React.useEffect(() => { loadOptions(); }, [loadOptions]);
 
@@ -263,10 +261,10 @@ export default function CalibrationListPage() {
 
     // === Create/Edit dialog state ===
     const emptyForm: Omit<CalibrationItem, 'id'> = {
-        user_id: '', // <-- NEW (diisi saat openCreate)
+        user_id: '',
         brand_name: '',
         capacity: '',
-        implementation_date: new Date(),
+        implementation_date: new Date(), // <- penting: null
         label_number: '',
         level_of_accuracy: '',
         person_responsible: '',
@@ -282,13 +280,14 @@ export default function CalibrationListPage() {
     const [saving, setSaving] = React.useState(false);
     const theme = useTheme();
     const isXs = useMediaQuery(theme.breakpoints.down('sm')); // < 600px
+
     const openCreate = React.useCallback(() => {
         setEditingItem(null);
         setForm({
             ...emptyForm,
-            user_id: uid ?? '',                 // <-- NEW
+            user_id: uid ?? '',
             person_responsible: picName || '',
-            implementation_date: new Date(),
+            implementation_date: new Date(), // tetap null
         });
         setDialogOpen(true);
     }, [picName, uid]);
@@ -297,13 +296,12 @@ export default function CalibrationListPage() {
         setEditingItem(item);
         setForm({
             ...item,
-            user_id: item.user_id ?? uid ?? '', // <-- NEW
+            user_id: item.user_id ?? uid ?? '',
             implementation_date: toDate(item.implementation_date),
             person_responsible: picName || item.person_responsible || '',
         });
         setDialogOpen(true);
     }, [picName, uid]);
-
 
     const closeDialog = React.useCallback(() => {
         setDialogOpen(false);
@@ -319,7 +317,7 @@ export default function CalibrationListPage() {
         setSavingMaster(true);
         try {
             await addDoc(collection(db, addDialogOpen === 'tool' ? 'tools' : 'brands'), { name: newName.trim() });
-            notifications.show(`${addDialogOpen === 'tool' ? 'Nama Alat' : 'Merek'} ditambahkan`, { severity: 'success' });
+            notifications.show(`${addDialogOpen === 'tool' ? 'Nama Alat' : 'Merek'} ditambahkan`, { severity: 'success', autoHideDuration: 3000 });
             await loadOptions();
             if (addDialogOpen === 'tool') {
                 setForm(f => ({ ...f, tool_name: newName.trim() }));
@@ -329,7 +327,7 @@ export default function CalibrationListPage() {
             setNewName('');
             setAddDialogOpen(null);
         } catch (e) {
-            notifications.show(`Gagal menambah: ${(e as Error).message}`, { severity: 'error' });
+            notifications.show(`Gagal menambah: ${(e as Error).message}`, { severity: 'error', autoHideDuration: 3000 });
         } finally {
             setSavingMaster(false);
         }
@@ -472,45 +470,84 @@ export default function CalibrationListPage() {
         saveAs(blob, `Calibration_Data_${fileSuffix}.xlsx`);
     }, [allItems, searchText, selectedMonth]);
 
+    // ===== Normalizers & validators (keras) =====
+    const norm = (v: unknown): string =>
+        v == null ? '' : typeof v === 'string' ? v.trim() : String(v).trim();
+
+    const getMissingRequired = (f: Omit<CalibrationItem, 'id'>) => {
+        const missing: string[] = [];
+
+        // Wajib semuanya:
+        if (!norm(f.tool_name)) missing.push('Nama Alat');
+        if (!norm(f.brand_name)) missing.push('Merek');
+        if (!norm(f.type_name)) missing.push('Tipe');
+        if (!norm(f.serial_number)) missing.push('No. Seri');
+        if (!norm(f.capacity)) missing.push('Kapasitas');
+        if (!norm(f.level_of_accuracy)) missing.push('Tingkat Ketelitian');
+        if (!norm(f.label_number)) missing.push('No. Label');
+        if (!norm(f.room_name)) missing.push('Ruangan');
+        if (!f.implementation_date) missing.push('Tanggal Pelaksanaan'); // khusus tanggal
+
+        return missing;
+    };
+
+
     // === Save (create/update) ===
     const handleSave = React.useCallback(async () => {
-        if (!form.tool_name?.trim() || !form.brand_name?.trim()) {
-            notifications.show('Nama Alat dan Merek wajib diisi', { severity: 'warning', autoHideDuration: 3000 });
-            return;
-        }
-        if (!uid) {
-            notifications.show('User belum terautentikasi.', { severity: 'error' });
+        // Required per field
+        const missing = getMissingRequired(form);
+        if (missing.length) {
+            notifications.show(
+                `Harus diisi: ${missing.join(', ')}`,
+                { severity: 'warning', autoHideDuration: 4000 }
+            );
             return;
         }
 
-        const finalPIC = (picName || '').trim();
+        if (!uid) {
+            notifications.show('User belum terautentikasi.', { severity: 'error', autoHideDuration: 3000 });
+            return;
+        }
+
         setSaving(true);
         try {
             const payload = {
                 ...form,
-                user_id: uid,  // <-- NEW: kuatkan ke UID login
-                person_responsible: finalPIC,
+                user_id: uid,
+                tool_name: norm(form.tool_name),
+                brand_name: norm(form.brand_name),
+                type_name: norm(form.type_name),
+                serial_number: norm(form.serial_number),
+                level_of_accuracy: norm(form.level_of_accuracy),
+                capacity: norm(form.capacity),
+                label_number: norm(form.label_number),
+                room_name: norm(form.room_name),
+                person_responsible: norm(picName),
                 implementation_date: form.implementation_date
-                    ? Timestamp.fromDate(new Date(form.implementation_date as unknown as string | Date))
+                    ? Timestamp.fromDate(new Date(form.implementation_date as any))
                     : null,
             };
 
             if (editingItem) {
                 await updateDoc(doc(db, 'calibration_data', editingItem.id), payload as any);
-                notifications.show('Data berhasil diperbarui', { severity: 'success', autoHideDuration: 2500 });
+                notifications.show('Data berhasil diperbarui', { severity: 'success', autoHideDuration: 3000 });
             } else {
                 await addDoc(collection(db, 'calibration_data'), payload as any);
-                notifications.show('Data berhasil ditambahkan', { severity: 'success', autoHideDuration: 2500 });
+                notifications.show('Data berhasil ditambahkan', { severity: 'success', autoHideDuration: 3000 });
             }
 
             setDialogOpen(false);
             await fetchItems();
         } catch (err) {
-            notifications.show(`Gagal menyimpan: ${(err as Error).message}`, { severity: 'error', autoHideDuration: 3500 });
+            notifications.show(`Gagal menyimpan: ${(err as Error).message}`, { severity: 'error', autoHideDuration: 3000 });
         } finally {
             setSaving(false);
         }
-    }, [editingItem, form, notifications, fetchItems, picName, uid]);
+    }, [editingItem, form, uid, picName, notifications, fetchItems]);
+
+
+    const missingRequired = React.useMemo(() => getMissingRequired(form), [form]);
+    const disableSave = saving || loadingPic || missingRequired.length > 0;
 
     return (
         <>
@@ -596,13 +633,10 @@ export default function CalibrationListPage() {
                 columns={columns}
                 loading={loading}
                 error={error}
-
                 paginationModel={paginationModel}
                 onPaginationModelChange={(m) => setPaginationModel(m)}
-
                 searchText={searchText}
                 onSearchTextChange={(v) => { setSearchText(v); setPaginationModel((p) => ({ ...p, page: 0 })); }}
-
                 onRefresh={fetchItems}
                 onCreate={openCreate}
                 onExport={handleExport}
@@ -626,6 +660,7 @@ export default function CalibrationListPage() {
                                 options={toolOptions.map(o => o.name)}
                                 value={form.tool_name || ''}
                                 onChange={(_, v) => setForm(f => ({ ...f, tool_name: v || '' }))}
+                                onInputChange={(_, v) => setForm(f => ({ ...f, tool_name: v || '' }))} // penting: hindari undefined
                                 renderInput={(params) => <TextField {...params} label="Nama Alat" required />}
                                 freeSolo
                                 fullWidth
@@ -639,6 +674,7 @@ export default function CalibrationListPage() {
                                 options={brandOptions.map(o => o.name)}
                                 value={form.brand_name || ''}
                                 onChange={(_, v) => setForm(f => ({ ...f, brand_name: v || '' }))}
+                                onInputChange={(_, v) => setForm(f => ({ ...f, brand_name: v || '' }))} // penting
                                 renderInput={(params) => <TextField {...params} label="Merek" required />}
                                 freeSolo
                                 fullWidth
@@ -706,7 +742,7 @@ export default function CalibrationListPage() {
                                     label="Tanggal Pelaksanaan"
                                     disabled={saving}
                                     value={form.implementation_date ? dayjs(toDate(form.implementation_date)) : null}
-                                    format="DD MMMM YYYY" // tampil: 20 Agustus 2020
+                                    format="DD MMMM YYYY"
                                     onChange={(value) => {
                                         setForm(f => ({
                                             ...f,
@@ -725,7 +761,7 @@ export default function CalibrationListPage() {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={closeDialog} disabled={saving}>Batal</Button>
-                    <Button onClick={handleSave} variant="contained" disabled={saving || loadingPic}>
+                    <Button onClick={handleSave} variant="contained" disabled={disableSave}>
                         {editingItem ? 'Simpan Perubahan' : 'Tambah'}
                     </Button>
                 </DialogActions>
