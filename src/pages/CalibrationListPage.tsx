@@ -41,6 +41,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 dayjs.locale('id');
 
+// + tambahkan di CalibrationItem
 export type CalibrationItem = {
     id: string;
     user_id?: string;
@@ -54,7 +55,9 @@ export type CalibrationItem = {
     serial_number: string;
     tool_name: string;
     type_name: string;
+    catatan?: string; // ⬅️ NEW
 };
+
 
 type NamedDoc = { id: string; name: string };
 
@@ -218,8 +221,10 @@ export default function CalibrationListPage() {
                     serial_number: String(data.serial_number ?? ''),
                     tool_name: String(data.tool_name ?? ''),
                     type_name: String(data.type_name ?? ''),
+                    catatan: String(data.catatan ?? ''), // ⬅️ NEW
                 };
             });
+
             setAllItems(items);
         } catch (e) {
             setError(e as Error);
@@ -264,7 +269,7 @@ export default function CalibrationListPage() {
         user_id: '',
         brand_name: '',
         capacity: '',
-        implementation_date: new Date(), // <- penting: null
+        implementation_date: new Date(),
         label_number: '',
         level_of_accuracy: '',
         person_responsible: '',
@@ -272,7 +277,9 @@ export default function CalibrationListPage() {
         serial_number: '',
         tool_name: '',
         type_name: '',
+        catatan: '', // ⬅️ NEW
     };
+
 
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [editingItem, setEditingItem] = React.useState<CalibrationItem | null>(null);
@@ -299,9 +306,11 @@ export default function CalibrationListPage() {
             user_id: item.user_id ?? uid ?? '',
             implementation_date: toDate(item.implementation_date),
             person_responsible: picName || item.person_responsible || '',
+            catatan: item.catatan ?? '', // ⬅️ NEW (fallback)
         });
         setDialogOpen(true);
     }, [picName, uid]);
+
 
     const closeDialog = React.useCallback(() => {
         setDialogOpen(false);
@@ -412,6 +421,10 @@ export default function CalibrationListPage() {
                 renderCell: (p) => highlightMatch(p.row.person_responsible, searchText)
             },
             {
+                field: 'catatan', headerName: 'CATATAN', width: 220, align: 'center', headerAlign: 'center',
+                renderCell: (p) => highlightMatch(p.row.catatan, searchText)
+            },
+            {
                 field: 'actions', headerName: 'ACTIONS', type: 'actions', width: 100, align: 'center', headerAlign: 'center',
                 getActions: ({ row }) => [
                     <GridActionsCellItem key="edit" icon={<EditIcon />} label="Edit"
@@ -450,6 +463,7 @@ export default function CalibrationListPage() {
             'Tingkat Ketelitian': row.level_of_accuracy,
             'Tanggal Pelaksanaan': implementationDateToDisplay(row.implementation_date),
             'Penanggung Jawab': row.person_responsible,
+            'Catatan': row.catatan ?? '', // ⬅️ NEW
         }));
 
         const header = Object.keys(data[0] || {});
@@ -459,7 +473,7 @@ export default function CalibrationListPage() {
         ws['!cols'] = [
             { wch: 30 }, { wch: 18 }, { wch: 18 }, { wch: 20 },
             { wch: 20 }, { wch: 16 }, { wch: 18 }, { wch: 20 },
-            { wch: 26 }, { wch: 16 },
+            { wch: 26 }, { wch: 16 }, { wch: 30 }, // ⬅️ NEW width Catatan
         ];
 
         const wb = XLSX.utils.book_new();
@@ -523,6 +537,7 @@ export default function CalibrationListPage() {
                 label_number: norm(form.label_number),
                 room_name: norm(form.room_name),
                 person_responsible: norm(picName),
+                catatan: norm(form.catatan), // ⬅️ NEW
                 implementation_date: form.implementation_date
                     ? Timestamp.fromDate(new Date(form.implementation_date as any))
                     : null,
@@ -757,6 +772,16 @@ export default function CalibrationListPage() {
                                 />
                             </LocalizationProvider>
                         </Stack>
+
+                        <TextField
+                            label="Catatan"
+                            value={form.catatan}
+                            onChange={(e) => setForm(f => ({ ...f, catatan: e.target.value }))}
+                            fullWidth
+                            multiline
+                            minRows={5}
+                        />
+
                     </Stack>
                 </DialogContent>
                 <DialogActions>
