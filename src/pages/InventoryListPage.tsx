@@ -169,8 +169,8 @@ export default function InventoryListPage() {
     // === Options for tools & brands ===
     const [toolOptions, setToolOptions] = React.useState<NamedDoc[]>([]);
     const [brandOptions, setBrandOptions] = React.useState<NamedDoc[]>([]);
-    const [roomOptions, setRoomOptions] = React.useState<NamedDoc[]>([]); // ⬅️ GANTI NAMA
-    const [unitOptions, setUnitOptions] = React.useState<NamedDoc[]>([]); // ⬅️ GANTI NAMA
+    const [roomOptions, setRoomOptions] = React.useState<NamedDoc[]>([]);
+    const [unitOptions, setUnitOptions] = React.useState<NamedDoc[]>([]);
     const loadOptions = React.useCallback(async () => {
         try {
             // ⬇️ GANTI NAMA VARIABEL SNAPSHOT
@@ -302,12 +302,6 @@ export default function InventoryListPage() {
 
     const openCreate = React.useCallback(() => {
         setEditingItem(null);
-        setForm({
-            ...emptyForm,
-            user_id: uid ?? '',
-            person_responsible: picName || '',
-            implementation_date: new Date(), // tetap null
-        });
         setDialogOpen(true);
     }, [picName, uid]);
 
@@ -325,6 +319,16 @@ export default function InventoryListPage() {
 
 
     const closeDialog = React.useCallback(() => {
+        setDialogOpen(false);
+    }, []);
+
+    const cancelDialog = React.useCallback(() => {
+        setForm({
+            ...emptyForm,
+            user_id: uid ?? '',
+            person_responsible: picName || '',
+            implementation_date: new Date(), // tetap null
+        });
         setDialogOpen(false);
     }, []);
 
@@ -599,14 +603,15 @@ export default function InventoryListPage() {
                 type_name: '',
                 serial_number: '',
                 room_name: payload.room_name,
-                person_responsible: '',
                 catatan: '',
-                implementation_date: payload.implementation_date,
                 satuan: payload.satuan, // Save unit
                 jumlah: 1, // Default quantity is 1
                 kondisi_baik: false, // Save condition checkboxes
                 kondisi_rr: false,
                 kondisi_rb: false,
+                user_id: uid ?? '',
+                person_responsible: picName || '',
+                implementation_date: new Date(), // tetap null
             })
             await fetchItems();
         } catch (err) {
@@ -875,7 +880,7 @@ export default function InventoryListPage() {
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={closeDialog} disabled={saving}>Batal</Button>
+                    <Button onClick={cancelDialog} disabled={saving}>Batal</Button>
                     <Button onClick={handleSave} variant="contained" disabled={disableSave}>
                         {editingItem ? 'Simpan Perubahan' : 'Tambah'}
                     </Button>

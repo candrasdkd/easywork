@@ -164,14 +164,17 @@ export default function CalibrationListPage() {
     // === Options for tools & brands ===
     const [toolOptions, setToolOptions] = React.useState<NamedDoc[]>([]);
     const [brandOptions, setBrandOptions] = React.useState<NamedDoc[]>([]);
+    const [roomOptions, setRoomOptions] = React.useState<NamedDoc[]>([]);
     const loadOptions = React.useCallback(async () => {
         try {
-            const [toolSnap, brandSnap] = await Promise.all([
+            const [toolSnap, brandSnap, roomSnap] = await Promise.all([
                 getDocs(query(collection(db, 'tools'), orderBy('name'))),
                 getDocs(query(collection(db, 'brands'), orderBy('name'))),
+                getDocs(query(collection(db, 'rooms'), orderBy('name'))),
             ]);
             setToolOptions(toolSnap.docs.map(d => ({ id: d.id, name: String(d.data().name || '') })));
             setBrandOptions(brandSnap.docs.map(d => ({ id: d.id, name: String(d.data().name || '') })));
+            setRoomOptions(roomSnap.docs.map(d => ({ id: d.id, name: String(d.data().name || '') })));
         } catch (e) {
             console.error(e);
         }
@@ -290,12 +293,6 @@ export default function CalibrationListPage() {
 
     const openCreate = React.useCallback(() => {
         setEditingItem(null);
-        setForm({
-            ...emptyForm,
-            user_id: uid ?? '',
-            person_responsible: picName || '',
-            implementation_date: new Date(), // tetap null
-        });
         setDialogOpen(true);
     }, [picName, uid]);
 
@@ -316,23 +313,56 @@ export default function CalibrationListPage() {
         setDialogOpen(false);
     }, []);
 
+    const cancelDialog = React.useCallback(() => {
+        setForm({
+            ...emptyForm,
+            user_id: uid ?? '',
+            person_responsible: picName || '',
+            implementation_date: new Date(), // tetap null
+        });
+        setDialogOpen(false);
+    }, []);
     // === Add new master (tools / brands) ===
-    const [addDialogOpen, setAddDialogOpen] = React.useState<null | 'tool' | 'brand'>(null);
+    const [addDialogOpen, setAddDialogOpen] = React.useState<null | 'tool' | 'brand' | 'ruangan'>(null);
     const [newName, setNewName] = React.useState('');
     const [savingMaster, setSavingMaster] = React.useState(false);
-
+    const collectionNameMap: Record<string, string> = {
+        tool: 'tools',
+        brand: 'brands',
+        ruangan: 'rooms',
+    };
+    const displayNameMap: Record<string, string> = {
+        tool: 'Nama Alat',
+        brand: 'Merek',
+        ruangan: 'Ruangan',
+    };
+    const formFieldMap: Record<string, string> = {
+        tool: 'tool_name',
+        brand: 'brand_name',
+        ruangan: 'room_name',
+    };
     const handleAddMaster = async () => {
         if (!newName.trim() || !addDialogOpen) return;
+
+        const collectionName = collectionNameMap[addDialogOpen];
+        const displayName = displayNameMap[addDialogOpen];
+        const formField = formFieldMap[addDialogOpen];
+
+        if (!collectionName || !displayName || !formField) {
+            notifications.show(`Tipe master tidak valid: ${addDialogOpen}`, { severity: 'error', autoHideDuration: 3000 });
+            return;
+        }
+
         setSavingMaster(true);
         try {
-            await addDoc(collection(db, addDialogOpen === 'tool' ? 'tools' : 'brands'), { name: newName.trim() });
-            notifications.show(`${addDialogOpen === 'tool' ? 'Nama Alat' : 'Merek'} ditambahkan`, { severity: 'success', autoHideDuration: 3000 });
-            await loadOptions();
-            if (addDialogOpen === 'tool') {
-                setForm(f => ({ ...f, tool_name: newName.trim() }));
-            } else {
-                setForm(f => ({ ...f, brand_name: newName.trim() }));
-            }
+            await addDoc(collection(db, collectionName), { name: newName.trim() });
+            notifications.show(`${displayName} ditambahkan`, { severity: 'success', autoHideDuration: 3000 });
+
+            await loadOptions(); // Reload semua options
+
+            // Set nilai form ke nama yang baru ditambahkan
+            setForm(f => ({ ...f, [formField]: newName.trim() }));
+
             setNewName('');
             setAddDialogOpen(null);
         } catch (e) {
@@ -551,7 +581,20 @@ export default function CalibrationListPage() {
                 notifications.show('Data berhasil ditambahkan', { severity: 'success', autoHideDuration: 3000 });
             }
 
-            setDialogOpen(false);
+            setForm({
+                tool_name: '',
+                brand_name: '',
+                type_name: '',
+                serial_number: '',
+                room_name: payload.room_name,
+                catatan: '',
+                level_of_accuracy: '',
+                capacity: '',
+                label_number: '',
+                user_id: uid ?? '',
+                person_responsible: picName || '',
+                implementation_date: new Date(), // tetap null
+            })
             await fetchItems();
         } catch (err) {
             notifications.show(`Gagal menyimpan: ${(err as Error).message}`, { severity: 'error', autoHideDuration: 3000 });
@@ -659,7 +702,7 @@ export default function CalibrationListPage() {
 
             {/* Create/Edit Dialog */}
             <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="md" keepMounted>
-                <DialogTitle>{editingItem ? 'Edit Kalibrasi' : 'Tambah Kalibrasi'}</DialogTitle>
+                <DialogTitle>{editingItem ? 'Edit Data' : 'Tambah Data'}</DialogTitle>
                 <DialogContent dividers>
                     {error && <Alert severity="error" sx={{ mb: 2 }}>{error.message}</Alert>}
 
@@ -734,14 +777,19 @@ export default function CalibrationListPage() {
                                 onChange={(e) => setForm(f => ({ ...f, label_number: e.target.value }))}
                                 fullWidth
                             />
-                            <TextField
-                                label="Ruangan"
-                                value={form.room_name}
-                                onChange={(e) => setForm(f => ({ ...f, room_name: e.target.value }))}
+                        </Stack>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                            <Autocomplete
+                                options={roomOptions.map(o => o.name)}
+                                value={form.room_name || ''}
+                                onChange={(_, v) => setForm(f => ({ ...f, room_name: v || '' }))}
+                                onInputChange={(_, v) => setForm(f => ({ ...f, room_name: v || '' }))}
+                                renderInput={(params) => <TextField {...params} label="Ruangan" required />}
+                                freeSolo
                                 fullWidth
                             />
+                            <Button variant="outlined" onClick={() => setAddDialogOpen('ruangan')}>+</Button>
                         </Stack>
-
                         {/* Penanggung Jawab: tampilkan, tapi disable */}
                         <TextField
                             label="Penanggung Jawab (otomatis)"
@@ -785,7 +833,7 @@ export default function CalibrationListPage() {
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={closeDialog} disabled={saving}>Batal</Button>
+                    <Button onClick={cancelDialog} disabled={saving}>Batal</Button>
                     <Button onClick={handleSave} variant="contained" disabled={disableSave}>
                         {editingItem ? 'Simpan Perubahan' : 'Tambah'}
                     </Button>
