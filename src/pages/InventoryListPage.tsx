@@ -169,14 +169,22 @@ export default function InventoryListPage() {
     // === Options for tools & brands ===
     const [toolOptions, setToolOptions] = React.useState<NamedDoc[]>([]);
     const [brandOptions, setBrandOptions] = React.useState<NamedDoc[]>([]);
+    const [roomOptions, setRoomOptions] = React.useState<NamedDoc[]>([]); // ⬅️ GANTI NAMA
+    const [unitOptions, setUnitOptions] = React.useState<NamedDoc[]>([]); // ⬅️ GANTI NAMA
     const loadOptions = React.useCallback(async () => {
         try {
-            const [toolSnap, brandSnap] = await Promise.all([
+            // ⬇️ GANTI NAMA VARIABEL SNAPSHOT
+            const [toolSnap, brandSnap, roomSnap, unitSnap] = await Promise.all([
                 getDocs(query(collection(db, 'tools'), orderBy('name'))),
                 getDocs(query(collection(db, 'brands'), orderBy('name'))),
+                getDocs(query(collection(db, 'rooms'), orderBy('name'))),
+                getDocs(query(collection(db, 'units'), orderBy('name'))),
             ]);
             setToolOptions(toolSnap.docs.map(d => ({ id: d.id, name: String(d.data().name || '') })));
             setBrandOptions(brandSnap.docs.map(d => ({ id: d.id, name: String(d.data().name || '') })));
+            // ⬇️ PERBAIKI BUG DI SINI (gunakan roomSnap dan unitSnap)
+            setRoomOptions(roomSnap.docs.map(d => ({ id: d.id, name: String(d.data().name || '') })));
+            setUnitOptions(unitSnap.docs.map(d => ({ id: d.id, name: String(d.data().name || '') })));
         } catch (e) {
             console.error(e);
         }
@@ -321,22 +329,49 @@ export default function InventoryListPage() {
     }, []);
 
     // === Add new master (tools / brands) ===
-    const [addDialogOpen, setAddDialogOpen] = React.useState<null | 'tool' | 'brand'>(null);
+    const [addDialogOpen, setAddDialogOpen] = React.useState<null | 'tool' | 'brand' | 'satuan' | 'ruangan'>(null);
     const [newName, setNewName] = React.useState('');
     const [savingMaster, setSavingMaster] = React.useState(false);
-
+    const collectionNameMap: Record<string, string> = {
+        tool: 'tools',
+        brand: 'brands',
+        satuan: 'units',
+        ruangan: 'rooms',
+    };
+    const displayNameMap: Record<string, string> = {
+        tool: 'Nama Alat',
+        brand: 'Merek',
+        satuan: 'Satuan',
+        ruangan: 'Ruangan',
+    };
+    const formFieldMap: Record<string, string> = {
+        tool: 'tool_name',
+        brand: 'brand_name',
+        satuan: 'satuan',
+        ruangan: 'room_name',
+    };
     const handleAddMaster = async () => {
         if (!newName.trim() || !addDialogOpen) return;
+
+        const collectionName = collectionNameMap[addDialogOpen];
+        const displayName = displayNameMap[addDialogOpen];
+        const formField = formFieldMap[addDialogOpen];
+
+        if (!collectionName || !displayName || !formField) {
+            notifications.show(`Tipe master tidak valid: ${addDialogOpen}`, { severity: 'error', autoHideDuration: 3000 });
+            return;
+        }
+
         setSavingMaster(true);
         try {
-            await addDoc(collection(db, addDialogOpen === 'tool' ? 'tools' : 'brands'), { name: newName.trim() });
-            notifications.show(`${addDialogOpen === 'tool' ? 'Nama Alat' : 'Merek'} ditambahkan`, { severity: 'success', autoHideDuration: 3000 });
-            await loadOptions();
-            if (addDialogOpen === 'tool') {
-                setForm(f => ({ ...f, tool_name: newName.trim() }));
-            } else {
-                setForm(f => ({ ...f, brand_name: newName.trim() }));
-            }
+            await addDoc(collection(db, collectionName), { name: newName.trim() });
+            notifications.show(`${displayName} ditambahkan`, { severity: 'success', autoHideDuration: 3000 });
+
+            await loadOptions(); // Reload semua options
+
+            // Set nilai form ke nama yang baru ditambahkan
+            setForm(f => ({ ...f, [formField]: newName.trim() }));
+
             setNewName('');
             setAddDialogOpen(null);
         } catch (e) {
@@ -345,7 +380,6 @@ export default function InventoryListPage() {
             setSavingMaster(false);
         }
     };
-
     const handleEdit = React.useCallback((item: InventoryItem) => () => openEdit(item), [openEdit]);
 
     const handleDelete = React.useCallback(
@@ -559,7 +593,21 @@ export default function InventoryListPage() {
                 notifications.show('Data berhasil ditambahkan', { severity: 'success', autoHideDuration: 3000 });
             }
 
-            setDialogOpen(false);
+            setForm({
+                tool_name: '',
+                brand_name: '',
+                type_name: '',
+                serial_number: '',
+                room_name: payload.room_name,
+                person_responsible: '',
+                catatan: '',
+                implementation_date: payload.implementation_date,
+                satuan: payload.satuan, // Save unit
+                jumlah: 1, // Default quantity is 1
+                kondisi_baik: false, // Save condition checkboxes
+                kondisi_rr: false,
+                kondisi_rb: false,
+            })
             await fetchItems();
         } catch (err) {
             notifications.show(`Gagal menyimpan: ${(err as Error).message}`, { severity: 'error', autoHideDuration: 3000 });
@@ -713,7 +761,6 @@ export default function InventoryListPage() {
                             />
                             <Button variant="outlined" onClick={() => setAddDialogOpen('brand')}>+</Button>
                         </Stack>
-
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                             <TextField
                                 label="Tipe"
@@ -729,42 +776,32 @@ export default function InventoryListPage() {
                             />
                         </Stack>
 
-                        {/* <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                            <TextField
-                                label="Tingkat Ketelitian"
-                                value={form.level_of_accuracy}
-                                onChange={(e) => setForm(f => ({ ...f, level_of_accuracy: e.target.value }))}
+                        <Stack direction="row" spacing={1} alignItems="center">
+                            <Autocomplete
+                                options={roomOptions.map(o => o.name)}
+                                value={form.room_name || ''}
+                                onChange={(_, v) => setForm(f => ({ ...f, room_name: v || '' }))}
+                                onInputChange={(_, v) => setForm(f => ({ ...f, room_name: v || '' }))}
+                                renderInput={(params) => <TextField {...params} label="Ruangan" required />}
+                                freeSolo
                                 fullWidth
                             />
-                            <TextField
-                                label="Kapasitas"
-                                value={form.capacity}
-                                onChange={(e) => setForm(f => ({ ...f, capacity: e.target.value }))}
-                                fullWidth
-                            />
-                        </Stack> */}
+                            <Button variant="outlined" onClick={() => setAddDialogOpen('ruangan')}>+</Button>
+                        </Stack>
 
-                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                            {/* <TextField
-                                label="No. Label"
-                                value={form.label_number}
-                                onChange={(e) => setForm(f => ({ ...f, label_number: e.target.value }))}
-                                fullWidth
-                            /> */}
-                            <TextField
-                                label="Ruangan"
-                                value={form.room_name}
-                                onChange={(e) => setForm(f => ({ ...f, room_name: e.target.value }))}
+                        <Stack direction="row" spacing={1} alignItems="center">
+                            <Autocomplete
+                                options={unitOptions.map(o => o.name)}
+                                value={form.satuan || ''}
+                                onChange={(_, v) => setForm(f => ({ ...f, satuan: v || '' }))}
+                                onInputChange={(_, v) => setForm(f => ({ ...f, satuan: v || '' }))}
+                                renderInput={(params) => <TextField {...params} label="Satuan" required />}
+                                freeSolo
                                 fullWidth
                             />
+                            <Button variant="outlined" onClick={() => setAddDialogOpen('satuan')}>+</Button>
                         </Stack>
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                            <TextField
-                                label="Satuan"
-                                value={form.satuan}
-                                onChange={(e) => setForm(f => ({ ...f, satuan: e.target.value }))}
-                                fullWidth
-                            />
                             <TextField
                                 label="Jumlah"
                                 value={form.jumlah || 1}
@@ -847,7 +884,10 @@ export default function InventoryListPage() {
 
             {/* Mini-Dialog: Tambah Master Tool/Brand */}
             <Dialog open={!!addDialogOpen} onClose={() => setAddDialogOpen(null)}>
-                <DialogTitle>Tambah {addDialogOpen === 'tool' ? 'Nama Alat' : 'Merek'}</DialogTitle>
+                {/* ⬇️ GANTI DialogTitle INI */}
+                <DialogTitle>
+                    Tambah {addDialogOpen ? (displayNameMap[addDialogOpen] || 'Item Baru') : 'Item Baru'}
+                </DialogTitle>
                 <DialogContent>
                     <TextField
                         label="Nama"
