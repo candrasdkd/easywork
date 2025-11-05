@@ -24,6 +24,7 @@ const drawerWidth = 240;
 const navItems = [
     { label: 'Dashboard', path: '/' },
     { label: 'Data Inputan', path: '/data-inputan' },
+    { label: 'Data Inventaris', path: '/data-inventaris' },
 ];
 
 function getInitials(name?: string | null) {
