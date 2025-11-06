@@ -56,7 +56,7 @@ export type InventoryItem = {
     type_name: string;
     catatan?: string;
     satuan?: string; // New field for unit
-    jumlah?: number; // Default quantity (1)
+    jumlah?: number | string; // Default quantity (1)
     kondisi_baik?: boolean; // Checkbox for 'Baik'
     kondisi_rr?: boolean; // Checkbox for 'RR'
     kondisi_rb?: boolean; // Checkbox for 'RB'
@@ -289,6 +289,11 @@ export default function InventoryListPage() {
         serial_number: '',
         tool_name: '',
         type_name: '',
+        satuan: '', // ⬅️ NEW
+        jumlah: 1, // ⬅️ NEW
+        kondisi_baik: false, // ⬅️ NEW
+        kondisi_rr: false, // ⬅️ NEW
+        kondisi_rb: false, // ⬅️ NEW
         catatan: '', // ⬅️ NEW
     };
 
@@ -583,7 +588,7 @@ export default function InventoryListPage() {
                     ? Timestamp.fromDate(new Date(form.implementation_date as any))
                     : null,
                 satuan: norm(form.satuan), // Save unit
-                jumlah: form.jumlah || 1, // Default quantity is 1
+                jumlah: form.jumlah ?? 1, // Default quantity is 1
                 kondisi_baik: form.kondisi_baik || false, // Save condition checkboxes
                 kondisi_rr: form.kondisi_rr || false,
                 kondisi_rb: form.kondisi_rb || false,
@@ -809,8 +814,28 @@ export default function InventoryListPage() {
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                             <TextField
                                 label="Jumlah"
-                                value={form.jumlah || 1}
-                                onChange={(e) => setForm(f => ({ ...f, jumlah: Number(e.target.value) }))}
+                                type="number"
+                                value={form.jumlah ?? ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    // Allow empty string to set state to null
+                                    if (val === '') {
+                                        setForm(f => ({ ...f, jumlah: '' }));
+                                    } else {
+                                        // Parse the number
+                                        const num = parseInt(val, 10);
+                                        // Only set state if it's a valid, non-negative integer
+                                        if (!isNaN(num) && num >= 0) {
+                                            setForm(f => ({ ...f, jumlah: num }));
+                                        }
+                                        // If "abc" or "-5", state doesn't change, field doesn't update
+                                    }
+                                }}
+                                inputProps={{ // For numeric keyboard and validation
+                                    min: 0,
+                                    inputMode: 'numeric',
+                                    pattern: '[0-9]*'
+                                }}
                                 fullWidth
                             />
                         </Stack>
