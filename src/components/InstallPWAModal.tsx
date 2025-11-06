@@ -1,109 +1,266 @@
 import { useState, useEffect } from 'react';
-import { usePWAInstall } from '../hooks/pwa/usePWAInstall'; // Asumsi hook dari jawaban sblmnya
-import { isIOS } from '../lib/deviceDetect'; // Helper yang baru kita buat
+import {
+    Modal,
+    Box,
+    Typography,
+    Button,
+    IconButton,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+    Paper,
+} from '@mui/material';
+import {
+    Close,
+    InstallDesktop,
+    Smartphone,
+    OfflineBolt,
+    Notifications,
+    Share
+} from '@mui/icons-material';
+import { usePWAInstall } from '../hooks/pwa/usePWAInstall';
+import { isIOS } from '../lib/deviceDetect';
 
 const STORAGE_KEY = 'pwa_prompt_seen';
+const PROMPT_DELAY = 3000;
+
+// Function to check if app is running in standalone mode
+const isStandalone = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    return (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes('android-app://')
+    );
+};
 
 export const InstallPWAModal = () => {
-    // 1. Dapatkan logika PWA dari hook
     const { isInstallable, triggerInstall } = usePWAInstall();
-
-    // 2. State untuk modal
     const [showModal, setShowModal] = useState(false);
+    const [isAppInstalled, setIsAppInstalled] = useState(false);
+    const isIOSDevice = isIOS();
 
-    // 3. Cek apakah ini iOS
-    const isIOSEnabled = isIOS();
-
-    // 4. Cek kapan harus menampilkan modal
     useEffect(() => {
+        setIsAppInstalled(isStandalone());
+    }, []);
+
+    useEffect(() => {
+        if (isAppInstalled) return;
+
         const hasSeenPrompt = localStorage.getItem(STORAGE_KEY);
+        if (hasSeenPrompt === 'true') return;
 
-        if (hasSeenPrompt === 'true') {
-            return; // Sudah pernah lihat, jangan ganggu
-        }
-
-        // Tampilkan modal jika bisa di-install (Android) ATAU jika ini iOS
-        const canShowPrompt = isInstallable || isIOSEnabled;
+        const canShowPrompt = isInstallable || isIOSDevice;
 
         if (canShowPrompt) {
-            // Tampilkan setelah 3 detik agar tidak terlalu mengganggu
             const timer = setTimeout(() => {
                 setShowModal(true);
-            }, 3000); // 3 detik
+            }, PROMPT_DELAY);
 
             return () => clearTimeout(timer);
         }
-    }, [isInstallable, isIOSEnabled]);
+    }, [isInstallable, isIOSDevice, isAppInstalled]);
 
-
-    // 5. Fungsi untuk menutup modal
     const handleClose = () => {
         setShowModal(false);
-        // Tandai sudah pernah lihat
         localStorage.setItem(STORAGE_KEY, 'true');
     };
 
-    // 6. Fungsi untuk handle install di Android
     const handleInstallClick = async () => {
-        await triggerInstall();
-        handleClose(); // Otomatis tutup setelah di-trigger
+        try {
+            await triggerInstall();
+            handleClose();
+        } catch (error) {
+            console.error('Installasi gagal:', error);
+            handleClose();
+        }
     };
 
-    // --- Render ---
-    if (!showModal) {
-        return null; // Jangan render apapun jika tidak perlu
+    if (!showModal || isAppInstalled) {
+        return null;
     }
 
     return (
-        // Overlay
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center p-4">
-
-            {/* Konten Modal */}
-            <div className="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full relative">
-
-                {/* Tombol Close */}
-                <button
+        <Modal
+            open={showModal}
+            onClose={handleClose}
+            aria-labelledby="pwa-install-title"
+            aria-describedby="pwa-install-description"
+            sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: 2
+            }}
+        >
+            <Paper
+                sx={{
+                    position: 'relative',
+                    maxWidth: 500,
+                    width: '100%',
+                    p: 3,
+                    m: 2,
+                    outline: 'none',
+                    maxHeight: '90vh',
+                    overflow: 'auto'
+                }}
+                elevation={24}
+            >
+                {/* Close Button */}
+                <IconButton
                     onClick={handleClose}
-                    className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl"
+                    sx={{
+                        position: 'absolute',
+                        right: 8,
+                        top: 8,
+                        color: 'text.secondary'
+                    }}
                 >
-                    &times;
-                </button>
+                    <Close />
+                </IconButton>
 
                 {/* Header */}
-                <div className="flex items-center mb-4">
-                    <img src="/logo.svg" alt="Easywork Logo" className="w-10 h-10 mr-3" />
-                    <h3 className="text-lg font-bold">Install Aplikasi Easywork</h3>
-                </div>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Box
+                        component="img"
+                        src="/logo.svg"
+                        alt="Easywork Logo"
+                        sx={{
+                            width: 40,
+                            height: 40,
+                            mr: 2
+                        }}
+                    />
+                    <Box>
+                        <Typography variant="h6" component="h2" fontWeight="bold">
+                            Install Easywork
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Akses lebih cepat dan offline
+                        </Typography>
+                    </Box>
+                </Box>
 
-                {/* Konten (Ini bagian "pintar"-nya) */}
-                {isInstallable && (
-                    // KONTEN ANDROID/CHROME
-                    <div>
-                        <p className="text-sm text-gray-700 mb-4">
-                            Dapatkan pengalaman aplikasi penuh. Install Easywork ke layar utama Anda untuk akses cepat dan fitur offline.
-                        </p>
-                        <button
+                {/* Content */}
+                <Box sx={{ mb: 3 }}>
+                    {isInstallable ? (
+                        <Box>
+                            <Typography variant="body1" color="text.primary" gutterBottom>
+                                Install aplikasi untuk pengalaman yang lebih baik:
+                            </Typography>
+
+                            <List dense sx={{ mb: 2 }}>
+                                <ListItem>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <Smartphone fontSize="small" color="primary" />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Akses cepat dari layar utama" />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <OfflineBolt fontSize="small" color="primary" />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Bekerja secara offline" />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <Notifications fontSize="small" color="primary" />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Notifikasi real-time" />
+                                </ListItem>
+                            </List>
+                        </Box>
+                    ) : isIOSDevice ? (
+                        <Box>
+                            <Typography variant="body1" color="text.primary" gutterBottom>
+                                Untuk install di perangkat iOS:
+                            </Typography>
+
+                            <List dense>
+                                <ListItem>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <Share fontSize="small" color="primary" />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary={
+                                            <Typography variant="body2">
+                                                Tap ikon <strong>"Share"</strong> di browser Safari
+                                            </Typography>
+                                        }
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <InstallDesktop fontSize="small" color="primary" />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary={
+                                            <Typography variant="body2">
+                                                Pilih <strong>"Add to Home Screen"</strong>
+                                            </Typography>
+                                        }
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <Smartphone fontSize="small" color="primary" />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary={
+                                            <Typography variant="body2">
+                                                Konfirmasi dengan tap <strong>"Add"</strong>
+                                            </Typography>
+                                        }
+                                    />
+                                </ListItem>
+                            </List>
+                        </Box>
+                    ) : null}
+                </Box>
+
+                {/* Action Buttons */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {isInstallable && (
+                        <Button
+                            variant="contained"
+                            size="large"
+                            startIcon={<InstallDesktop />}
                             onClick={handleInstallClick}
-                            className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700"
+                            sx={{
+                                py: 1.5,
+                                borderRadius: 2,
+                                fontWeight: 'bold'
+                            }}
                         >
-                            Install Sekarang
-                        </button>
-                    </div>
-                )}
+                            Install Aplikasi
+                        </Button>
+                    )}
 
-                {isIOSEnabled && !isInstallable && (
-                    // KONTEN IOS/SAFARI
-                    <div>
-                        <p className="text-sm text-gray-700 mb-4">
-                            Untuk meng-install aplikasi ini di iPhone/iPad Anda:
-                        </p>
-                        <ol className="text-sm text-gray-600 list-decimal list-inside space-y-2">
-                            <li>Tap ikon <strong>"Share"</strong> di browser.</li>
-                            <li>Scroll ke bawah dan pilih <strong>"Add to Home Screen"</strong>.</li>
-                        </ol>
-                    </div>
-                )}
-            </div>
-        </div>
+                    <Button
+                        variant={isInstallable ? "outlined" : "contained"}
+                        size="large"
+                        onClick={handleClose}
+                        sx={{
+                            py: 1.5,
+                            borderRadius: 2,
+                            fontWeight: 'medium'
+                        }}
+                    >
+                        {isInstallable ? 'Nanti Saja' : 'Mengerti'}
+                    </Button>
+                </Box>
+
+                {/* Footer Note */}
+                <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    align="center"
+                    sx={{ mt: 2, display: 'block' }}
+                >
+                    Dapat diuninstall kapan saja
+                </Typography>
+            </Paper>
+        </Modal>
     );
 };
