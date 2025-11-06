@@ -1,7 +1,7 @@
-const CACHE_NAME = 'v1';
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_NAME = 'app-cache-v1';
 const urlsToCache = [
   '/',
+  '/index.html',
   '/static/js/bundle.js',
   '/static/css/main.css',
   '/manifest.json'
@@ -16,6 +16,7 @@ self.addEventListener('install', (event) => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting()) // Activate immediately
   );
 });
 
@@ -32,32 +33,34 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // Take control immediately
   );
 });
 
 // Fetch
 self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        if (response) {
-          return response;
-        }
-
-        return fetch(event.request).then((response) => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-
-          return response;
-        });
+        // Return cached version or fetch
+        return response || fetch(event.request)
+          .then((fetchResponse) => {
+            // Cache new requests
+            return caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, fetchResponse.clone());
+                return fetchResponse;
+              });
+          })
+          .catch(() => {
+            // Fallback for failed requests
+            if (event.request.destination === 'document') {
+              return caches.match('/');
+            }
+          });
       })
   );
 });
