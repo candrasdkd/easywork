@@ -7,19 +7,6 @@ import DialogsProvider from './hooks/useDialogs/DialogsProvider.tsx';
 import ThemeModeProvider from './hooks/themes/ThemeContext.tsx'; // ⬅️ Ganti
 import { AuthProvider } from './contexts/AuthContext.tsx';
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    // Untuk custom service worker di public folder
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('SW registered: ', registration);
-      })
-      .catch((registrationError) => {
-        console.log('SW registration failed: ', registrationError);
-      });
-  });
-}
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
