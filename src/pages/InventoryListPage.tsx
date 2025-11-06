@@ -207,14 +207,18 @@ export default function InventoryListPage() {
                 qRef = query(
                     collection(db, 'inventory_data'),
                     where('implementation_date', '>=', Timestamp.fromDate(startOfMonth)),
-                    where('implementation_date', '<=', Timestamp.fromDate(endOfMonth))
+                    where('implementation_date', '<=', Timestamp.fromDate(endOfMonth)),
+                    // TAMBAHKAN INI: Urutkan berdasarkan tanggal, dari terbaru (descending)
+                    orderBy('implementation_date', 'desc')
                 );
             } else {
                 qRef = query(
                     collection(db, 'inventory_data'),
                     where('user_id', '==', uid),
                     where('implementation_date', '>=', Timestamp.fromDate(startOfMonth)),
-                    where('implementation_date', '<=', Timestamp.fromDate(endOfMonth))
+                    where('implementation_date', '<=', Timestamp.fromDate(endOfMonth)),
+                    // TAMBAHKAN INI: Urutkan berdasarkan tanggal, dari terbaru (descending)
+                    orderBy('implementation_date', 'desc')
                 );
             }
 
@@ -231,12 +235,12 @@ export default function InventoryListPage() {
                     serial_number: String(data.serial_number ?? ''),
                     tool_name: String(data.tool_name ?? ''),
                     type_name: String(data.type_name ?? ''),
-                    satuan: String(data.satuan ?? ''), // ⬅️ NEW
-                    jumlah: Number(data.jumlah ?? 0), // ⬅️ NEW
-                    kondisi_baik: Boolean(data.kondisi_baik ?? false), // ⬅️ NEW
-                    kondisi_rr: Boolean(data.kondisi_rr ?? false), // ⬅️ NEW
-                    kondisi_rb: Boolean(data.kondisi_rb ?? false), // ⬅️ NEW
-                    catatan: String(data.catatan ?? ''), // ⬅️ NEW
+                    satuan: String(data.satuan ?? ''),
+                    jumlah: Number(data.jumlah ?? 0),
+                    kondisi_baik: Boolean(data.kondisi_baik ?? false),
+                    kondisi_rr: Boolean(data.kondisi_rr ?? false),
+                    kondisi_rb: Boolean(data.kondisi_rb ?? false),
+                    catatan: String(data.catatan ?? ''),
                 };
             });
 
@@ -246,7 +250,7 @@ export default function InventoryListPage() {
         } finally {
             setLoading(false);
         }
-    }, [uid, selectedMonth]);
+    }, [uid, selectedMonth, auth.currentUser]); // <-- auth ditambahkan ke dependency array
 
     React.useEffect(() => { fetchItems(); }, [fetchItems]);
     React.useEffect(() => { loadOptions(); }, [loadOptions]);

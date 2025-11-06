@@ -197,14 +197,16 @@ export default function CalibrationListPage() {
                 qRef = query(
                     collection(db, 'calibration_data'),
                     where('implementation_date', '>=', Timestamp.fromDate(startOfMonth)),
-                    where('implementation_date', '<=', Timestamp.fromDate(endOfMonth))
+                    where('implementation_date', '<=', Timestamp.fromDate(endOfMonth)),
+                    orderBy('implementation_date', 'desc')
                 );
             } else {
                 qRef = query(
                     collection(db, 'calibration_data'),
                     where('user_id', '==', uid),
                     where('implementation_date', '>=', Timestamp.fromDate(startOfMonth)),
-                    where('implementation_date', '<=', Timestamp.fromDate(endOfMonth))
+                    where('implementation_date', '<=', Timestamp.fromDate(endOfMonth)),
+                    orderBy('implementation_date', 'desc')
                 );
             }
 
