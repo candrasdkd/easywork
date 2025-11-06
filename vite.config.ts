@@ -1,72 +1,48 @@
+// Di dalam file vite.config.ts
+
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
+import { VitePWA } from 'vite-plugin-pwa' // <-- Impor plugin
 
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'autoUpdate', // Otomatis update service worker
       injectRegister: 'auto',
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
-      },
       manifest: {
-        name: 'easywork-web',
+        // Ini adalah konfigurasi untuk 'manifest.json' Anda
+        name: 'EasyWork',
         short_name: 'EasyWork',
-        description: 'Description of your app',
-        theme_color: '#ffffff',
+        description: 'Deskripsi singkat tentang aplikasi Anda',
+        theme_color: '#ffffff', // Sesuaikan dengan warna tema aplikasi Anda
         background_color: '#ffffff',
         display: 'standalone',
-        orientation: 'portrait',
         scope: '/',
         start_url: '/',
-        categories: ['business', 'productivity'],
+        orientation: 'portrait',
         icons: [
+          // Anda WAJIB membuat ikon-ikon ini
+          // dan meletakkannya di folder /public
           {
-            src: 'pwa-64x64.png',
-            sizes: '64x64',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-192x192.png',
+            src: '/pwa-192x192.png', // path ke ikon di folder public
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
           },
           {
-            src: 'pwa-512x512.png',
+            src: '/pwa-512x512.png', // path ke ikon di folder public
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any'
           },
           {
-            src: 'maskable-icon-512x512.png',
+            src: '/pwa-512x512.png', // ikon untuk di-mask
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'maskable'
-          }
-        ]
+            purpose: 'maskable', // <-- penting untuk PWA
+          },
+        ],
       },
-      devOptions: {
-        enabled: true, // Enable PWA in development
-        type: 'module'
-      }
-    })
+    }),
   ],
 })
