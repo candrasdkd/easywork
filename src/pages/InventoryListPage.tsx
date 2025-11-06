@@ -441,14 +441,15 @@ export default function InventoryListPage() {
                 field: 'room_name', headerName: 'RUANGAN', width: 160, align: 'center', headerAlign: 'center',
                 renderCell: (p) => highlightMatch(p.row.room_name, searchText)
             },
-            // {
-            //     field: 'capacity', headerName: 'KAPASITAS', width: 140, align: 'center', headerAlign: 'center',
-            //     renderCell: (p) => highlightMatch(p.row.capacity, searchText)
-            // },
-            // {
-            //     field: 'level_of_accuracy', headerName: 'TINGKAT KETELITIAN', width: 160, align: 'center', headerAlign: 'center',
-            //     renderCell: (p) => highlightMatch(p.row.level_of_accuracy, searchText)
-            // },
+            {
+                field: 'satuan', headerName: 'SATUAN', width: 160, align: 'center', headerAlign: 'center',
+                renderCell: (p) => highlightMatch(p.row.satuan, searchText)
+            },
+            {
+                field: 'jumlah', headerName: 'JUMLAH', width: 140, align: 'center', headerAlign: 'center',
+                renderCell: (p) => highlightMatch(p.row.jumlah, searchText)
+            },
+
             {
                 field: 'implementation_date',
                 headerName: 'TANGGAL PELAKSANAAN',
