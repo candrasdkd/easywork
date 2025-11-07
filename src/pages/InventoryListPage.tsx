@@ -543,35 +543,8 @@ export default function InventoryListPage() {
     const norm = (v: unknown): string =>
         v == null ? '' : typeof v === 'string' ? v.trim() : String(v).trim();
 
-    const getMissingRequired = (f: Omit<InventoryItem, 'id'>) => {
-        const missing: string[] = [];
-
-        // Wajib semuanya:
-        if (!norm(f.tool_name)) missing.push('Nama Alat');
-        if (!norm(f.brand_name)) missing.push('Merek');
-        if (!norm(f.type_name)) missing.push('Tipe');
-        if (!norm(f.serial_number)) missing.push('No. Seri');
-        // if (!norm(f.capacity)) missing.push('Kapasitas');
-        // if (!norm(f.level_of_accuracy)) missing.push('Tingkat Ketelitian');
-        // if (!norm(f.label_number)) missing.push('No. Label');
-        if (!norm(f.room_name)) missing.push('Ruangan');
-        if (!f.implementation_date) missing.push('Tanggal Pelaksanaan'); // khusus tanggal
-
-        return missing;
-    };
-
-
     // === Save (create/update) ===
     const handleSave = React.useCallback(async () => {
-        const missing = getMissingRequired(form);
-        if (missing.length) {
-            notifications.show(
-                `Harus diisi: ${missing.join(', ')}`,
-                { severity: 'warning', autoHideDuration: 4000 }
-            );
-            return;
-        }
-
         if (!uid) {
             notifications.show('User belum terautentikasi.', { severity: 'error', autoHideDuration: 3000 });
             return;
@@ -623,7 +596,9 @@ export default function InventoryListPage() {
                 person_responsible: picName || '',
                 implementation_date: new Date(), // tetap null
             })
+
             await fetchItems();
+            setDialogOpen(false);
         } catch (err) {
             notifications.show(`Gagal menyimpan: ${(err as Error).message}`, { severity: 'error', autoHideDuration: 3000 });
         } finally {
@@ -632,9 +607,7 @@ export default function InventoryListPage() {
     }, [editingItem, form, uid, picName, notifications, fetchItems]);
 
 
-
-    const missingRequired = React.useMemo(() => getMissingRequired(form), [form]);
-    const disableSave = saving || loadingPic || missingRequired.length > 0;
+    const disableSave = saving || loadingPic;
 
     return (
         <>
@@ -756,7 +729,7 @@ export default function InventoryListPage() {
                                 value={form.tool_name || ''}
                                 onChange={(_, v) => setForm(f => ({ ...f, tool_name: v || '' }))}
                                 onInputChange={(_, v) => setForm(f => ({ ...f, tool_name: v || '' }))} // penting: hindari undefined
-                                renderInput={(params) => <TextField {...params} label="Nama Alat" required />}
+                                renderInput={(params) => <TextField {...params} label="Nama Alat" />}
                                 freeSolo
                                 fullWidth
                             />
@@ -770,7 +743,7 @@ export default function InventoryListPage() {
                                 value={form.brand_name || ''}
                                 onChange={(_, v) => setForm(f => ({ ...f, brand_name: v || '' }))}
                                 onInputChange={(_, v) => setForm(f => ({ ...f, brand_name: v || '' }))} // penting
-                                renderInput={(params) => <TextField {...params} label="Merek" required />}
+                                renderInput={(params) => <TextField {...params} label="Merek" />}
                                 freeSolo
                                 fullWidth
                             />
@@ -797,7 +770,7 @@ export default function InventoryListPage() {
                                 value={form.room_name || ''}
                                 onChange={(_, v) => setForm(f => ({ ...f, room_name: v || '' }))}
                                 onInputChange={(_, v) => setForm(f => ({ ...f, room_name: v || '' }))}
-                                renderInput={(params) => <TextField {...params} label="Ruangan" required />}
+                                renderInput={(params) => <TextField {...params} label="Ruangan" />}
                                 freeSolo
                                 fullWidth
                             />
@@ -810,7 +783,7 @@ export default function InventoryListPage() {
                                 value={form.satuan || ''}
                                 onChange={(_, v) => setForm(f => ({ ...f, satuan: v || '' }))}
                                 onInputChange={(_, v) => setForm(f => ({ ...f, satuan: v || '' }))}
-                                renderInput={(params) => <TextField {...params} label="Satuan" required />}
+                                renderInput={(params) => <TextField {...params} label="Satuan" />}
                                 freeSolo
                                 fullWidth
                             />

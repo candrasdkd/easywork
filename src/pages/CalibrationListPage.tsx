@@ -231,6 +231,7 @@ export default function CalibrationListPage() {
             });
 
             setAllItems(items);
+            setDialogOpen(false);
         } catch (e) {
             setError(e as Error);
         } finally {
@@ -520,35 +521,35 @@ export default function CalibrationListPage() {
     const norm = (v: unknown): string =>
         v == null ? '' : typeof v === 'string' ? v.trim() : String(v).trim();
 
-    const getMissingRequired = (f: Omit<CalibrationItem, 'id'>) => {
-        const missing: string[] = [];
+    // const getMissingRequired = (f: Omit<CalibrationItem, 'id'>) => {
+    //     const missing: string[] = [];
 
-        // Wajib semuanya:
-        if (!norm(f.tool_name)) missing.push('Nama Alat');
-        if (!norm(f.brand_name)) missing.push('Merek');
-        if (!norm(f.type_name)) missing.push('Tipe');
-        if (!norm(f.serial_number)) missing.push('No. Seri');
-        if (!norm(f.capacity)) missing.push('Kapasitas');
-        if (!norm(f.level_of_accuracy)) missing.push('Tingkat Ketelitian');
-        if (!norm(f.label_number)) missing.push('No. Label');
-        if (!norm(f.room_name)) missing.push('Ruangan');
-        if (!f.implementation_date) missing.push('Tanggal Pelaksanaan'); // khusus tanggal
+    //     // Wajib semuanya:
+    //     if (!norm(f.tool_name)) missing.push('Nama Alat');
+    //     if (!norm(f.brand_name)) missing.push('Merek');
+    //     if (!norm(f.type_name)) missing.push('Tipe');
+    //     if (!norm(f.serial_number)) missing.push('No. Seri');
+    //     if (!norm(f.capacity)) missing.push('Kapasitas');
+    //     if (!norm(f.level_of_accuracy)) missing.push('Tingkat Ketelitian');
+    //     if (!norm(f.label_number)) missing.push('No. Label');
+    //     if (!norm(f.room_name)) missing.push('Ruangan');
+    //     if (!f.implementation_date) missing.push('Tanggal Pelaksanaan'); // khusus tanggal
 
-        return missing;
-    };
+    //     return missing;
+    // };
 
 
     // === Save (create/update) ===
     const handleSave = React.useCallback(async () => {
         // Required per field
-        const missing = getMissingRequired(form);
-        if (missing.length) {
-            notifications.show(
-                `Harus diisi: ${missing.join(', ')}`,
-                { severity: 'warning', autoHideDuration: 4000 }
-            );
-            return;
-        }
+        // const missing = getMissingRequired(form);
+        // if (missing.length) {
+        //     notifications.show(
+        //         `Harus diisi: ${missing.join(', ')}`,
+        //         { severity: 'warning', autoHideDuration: 4000 }
+        //     );
+        //     return;
+        // }
 
         if (!uid) {
             notifications.show('User belum terautentikasi.', { severity: 'error', autoHideDuration: 3000 });
@@ -606,8 +607,8 @@ export default function CalibrationListPage() {
     }, [editingItem, form, uid, picName, notifications, fetchItems]);
 
 
-    const missingRequired = React.useMemo(() => getMissingRequired(form), [form]);
-    const disableSave = saving || loadingPic || missingRequired.length > 0;
+    // const missingRequired = React.useMemo(() => getMissingRequired(form), [form]);
+    const disableSave = saving || loadingPic
 
     return (
         <>
@@ -721,7 +722,7 @@ export default function CalibrationListPage() {
                                 value={form.tool_name || ''}
                                 onChange={(_, v) => setForm(f => ({ ...f, tool_name: v || '' }))}
                                 onInputChange={(_, v) => setForm(f => ({ ...f, tool_name: v || '' }))} // penting: hindari undefined
-                                renderInput={(params) => <TextField {...params} label="Nama Alat" required />}
+                                renderInput={(params) => <TextField {...params} label="Nama Alat" />}
                                 freeSolo
                                 fullWidth
                             />
@@ -735,7 +736,7 @@ export default function CalibrationListPage() {
                                 value={form.brand_name || ''}
                                 onChange={(_, v) => setForm(f => ({ ...f, brand_name: v || '' }))}
                                 onInputChange={(_, v) => setForm(f => ({ ...f, brand_name: v || '' }))} // penting
-                                renderInput={(params) => <TextField {...params} label="Merek" required />}
+                                renderInput={(params) => <TextField {...params} label="Merek" />}
                                 freeSolo
                                 fullWidth
                             />
@@ -786,7 +787,7 @@ export default function CalibrationListPage() {
                                 value={form.room_name || ''}
                                 onChange={(_, v) => setForm(f => ({ ...f, room_name: v || '' }))}
                                 onInputChange={(_, v) => setForm(f => ({ ...f, room_name: v || '' }))}
-                                renderInput={(params) => <TextField {...params} label="Ruangan" required />}
+                                renderInput={(params) => <TextField {...params} label="Ruangan" />}
                                 freeSolo
                                 fullWidth
                             />
