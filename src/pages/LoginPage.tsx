@@ -1,25 +1,9 @@
 // src/pages/Login.tsx
 import * as React from 'react'
-import {
-    Alert,
-    Box,
-    Paper,
-    Typography,
-    Divider,
-    Stack,
-    TextField,
-    Button,
-    IconButton,
-    InputAdornment,
-    Link,
-    Tooltip,
-} from '@mui/material'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
-import LightModeIcon from '@mui/icons-material/LightMode'
-import DarkModeIcon from '@mui/icons-material/DarkMode'
 import { useLocation, useNavigate } from 'react-router'
-import { useAuth } from '../contexts/AuthContext' // asumsi sudah ada (provider yang expose "user")
+import { useAuth } from '../contexts/AuthContext'
 import { signInWithEmail, signUpWithEmail, sendResetPassword } from '../lib/firebase'
 
 type Mode = 'login' | 'register'
@@ -48,8 +32,7 @@ export default function Login() {
 
     // Simple validation
     const emailErr = email && !/^\S+@\S+\.\S+$/.test(email) ? 'Format email tidak valid' : ''
-    const pwdErr =
-        password && password.length < 6 ? 'Minimal 6 karakter' : ''
+    const pwdErr = password && password.length < 6 ? 'Minimal 6 karakter' : ''
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -98,212 +81,239 @@ export default function Login() {
     }
 
     return (
-        <Box
-            sx={{
-                minHeight: '100dvh',
-                display: 'grid',
-                placeItems: 'center',
-                background: (theme) =>
-                    theme.palette.mode === 'dark'
-                        ? 'radial-gradient(60rem 60rem at 10% 10%, rgba(99,102,241,0.25), transparent), radial-gradient(50rem 50rem at 90% 90%, rgba(236,72,153,0.22), transparent), linear-gradient(160deg, #0b1020 0%, #111827 100%)'
-                        : 'radial-gradient(60rem 60rem at 10% 10%, rgba(99,102,241,0.25), transparent), radial-gradient(50rem 50rem at 90% 90%, rgba(236,72,153,0.18), transparent), linear-gradient(160deg, #f8fafc 0%, #eef2ff 100%)',
-                px: 2,
-            }}
-        >
-            {/* Dekorasi blur blob */}
-            <Box
-                aria-hidden
-                sx={{
-                    position: 'fixed',
-                    inset: 0,
-                    pointerEvents: 'none',
-                    '&::before, &::after': {
-                        content: '""',
-                        position: 'absolute',
-                        filter: 'blur(64px)',
-                        opacity: 0.35,
-                        borderRadius: '9999px',
-                    },
-                    '&::before': {
-                        width: 280, height: 280, top: 80, left: 80,
-                        background: 'linear-gradient(45deg, #6366F1, #22D3EE)',
-                    },
-                    '&::after': {
-                        width: 320, height: 320, bottom: 60, right: 80,
-                        background: 'linear-gradient(45deg, #F472B6, #F59E0B)',
-                    },
-                }}
-            />
+        <div className="min-h-screen flex bg-white font-sans text-slate-900">
+            {/* Left Decorative / Brand Panel (Hidden on Mobile) */}
+            <div className="relative hidden w-1/2 lg:flex flex-col justify-between p-12 overflow-hidden bg-slate-900">
+                {/* Background Details */}
+                <div className="absolute inset-0 z-0">
+                    {/* Glowing Orbs */}
+                    <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-500/30 blur-[100px]" />
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-cyan-400/20 blur-[120px]" />
 
-            <Paper
-                elevation={0}
-                sx={{
-                    width: '100%',
-                    maxWidth: 560,
-                    borderRadius: 4,
-                    overflow: 'hidden',
-                    backdropFilter: 'blur(10px)',
-                    border: (t) =>
-                        t.palette.mode === 'dark'
-                            ? '1px solid rgba(255,255,255,0.08)'
-                            : '1px solid rgba(0,0,0,0.06)',
-                    boxShadow: (t) =>
-                        t.palette.mode === 'dark'
-                            ? '0 10px 40px rgba(0,0,0,0.55)'
-                            : '0 10px 40px rgba(31,41,55,0.16)',
-                }}
-            >
-                <Box sx={{ p: { xs: 3, md: 5 } }}>
-                    {/* Header */}
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
-                            <Box
-                                sx={{
-                                    width: 40, height: 40, borderRadius: 2,
-                                    background: (t) =>
-                                        t.palette.mode === 'dark'
-                                            ? 'linear-gradient(45deg, #6366F1, #22D3EE)'
-                                            : 'linear-gradient(45deg, #4F46E5, #06B6D4)',
-                                    display: 'grid', placeItems: 'center',
-                                    color: '#fff', fontWeight: 800, fontSize: 18,
-                                }}
-                            >
-                                E
-                            </Box>
-                            <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
-                                EasyWork
-                            </Typography>
-                        </Stack>
+                    {/* Dark overlay with pattern */}
+                    <div
+                        className="absolute inset-0 opacity-20"
+                        style={{
+                            backgroundImage: "radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.2) 1px, transparent 0)",
+                            backgroundSize: "32px 32px"
+                        }}
+                    />
+                </div>
 
-                        <Tooltip title="Ikuti toggle tema di navbar utama">
-                            <span>
-                                <IconButton disabled size="small">
-                                    <LightModeIcon fontSize="small" />
-                                    <DarkModeIcon fontSize="small" />
-                                </IconButton>
+                {/* Brand Content */}
+                <div className="relative z-10 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 p-0.5 shadow-lg shadow-indigo-500/30">
+                        <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+                            <span className="text-xl font-black bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent">E</span>
+                        </div>
+                    </div>
+                    <span className="text-2xl font-bold tracking-tight text-white drop-shadow-sm">EasyWork</span>
+                </div>
+
+                <div className="relative z-10 max-w-lg mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    <h1 className="text-5xl font-black text-white leading-[1.15] mb-6">
+                        Solusi Pintar <br />
+                        <span className="bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+                            Manajemen Anda
+                        </span>
+                    </h1>
+                    <p className="text-lg text-slate-400 leading-relaxed font-medium">
+                        Platform andalan untuk memonitor, mengelola inventaris, dan kalibrasi dengan cepat, presisi, dan aman.
+                    </p>
+
+                    {/* UI Illustration representation (Decorative Mockup elements) */}
+                    <div className="mt-12 flex gap-4 opacity-80 mix-blend-plus-lighter">
+                        <div className="h-2 w-12 bg-indigo-500/50 rounded-full" />
+                        <div className="h-2 w-24 bg-cyan-400/50 rounded-full" />
+                        <div className="h-2 w-16 bg-slate-600/50 rounded-full" />
+                    </div>
+                </div>
+
+                {/* Footer on left side */}
+                <div className="relative z-10 text-sm font-medium text-slate-500">
+                    &copy; {new Date().getFullYear()} EasyWork. All rights reserved.
+                </div>
+            </div>
+
+            {/* Right Form Panel */}
+            <div className="flex w-full lg:w-1/2 flex-col justify-center items-center p-6 sm:p-12 xl:p-24 relative bg-white">
+
+                {/* Mobile Header */}
+                <div className="absolute top-8 left-8 flex items-center gap-3 lg:hidden">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 p-0.5 shadow-md shadow-indigo-500/20">
+                        <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+                            <span className="text-lg font-black text-white">E</span>
+                        </div>
+                    </div>
+                    <span className="font-bold tracking-tight text-slate-800 text-xl">EasyWork</span>
+                </div>
+
+                <div className="w-full max-w-sm mt-12 lg:mt-0 animate-in fade-in zoom-in-95 duration-500">
+                    <div className="mb-10 text-center lg:text-left">
+                        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-2">
+                            {mode === 'login' ? 'Selamat Datang' : 'Mulai Sekarang'}
+                        </h2>
+                        <p className="text-slate-500">
+                            {mode === 'login'
+                                ? 'Masuk untuk mengakses dashboard Anda.'
+                                : 'Lengkapi detail berikut untuk membuat akun.'}
+                        </p>
+                    </div>
+
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50/50 border border-red-200 text-red-700 text-sm rounded-xl font-medium" role="alert">
+                            <span className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+                                {error}
                             </span>
-                        </Tooltip>
-                    </Stack>
+                        </div>
+                    )}
 
-                    <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1.2, mb: 1 }}>
-                        {mode === 'login' ? 'Masuk' : 'Daftar akun baru'}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        {mode === 'login'
-                            ? 'Gunakan email & password untuk masuk.'
-                            : 'Isi data di bawah untuk membuat akun baru.'}
-                    </Typography>
+                    {success && (
+                        <div className="mb-6 p-4 bg-emerald-50/50 border border-emerald-200 text-emerald-700 text-sm rounded-xl font-medium" role="alert">
+                            <span className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                {success}
+                            </span>
+                        </div>
+                    )}
 
-                    {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-                    {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-
-                    <Box component="form" onSubmit={handleSubmit} noValidate>
-                        <Stack spacing={2.2}>
-                            {mode === 'register' && (
-                                <TextField
-                                    label="Nama"
+                    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+                        {mode === 'register' && (
+                            <div className="space-y-1.5">
+                                <label className="block text-sm font-semibold text-slate-700" htmlFor="displayName">
+                                    Nama Lengkap
+                                </label>
+                                <input
+                                    id="displayName"
+                                    type="text"
                                     value={displayName}
                                     onChange={(e) => setDisplayName(e.target.value)}
                                     autoComplete="name"
-                                    fullWidth
+                                    className="block w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                    placeholder="John Doe"
                                 />
-                            )}
+                            </div>
+                        )}
 
-                            <TextField
-                                label="Email"
+                        <div className="space-y-1.5">
+                            <label className="block text-sm font-semibold text-slate-700" htmlFor="email">
+                                Alamat Email
+                            </label>
+                            <input
+                                id="email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 autoComplete="email"
-                                fullWidth
-                                error={!!email && !!emailErr}
-                                helperText={email && emailErr ? emailErr : ' '}
+                                className={`block w-full px-4 py-3.5 bg-slate-50 border rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 outline-none transition-all ${!!email && !!emailErr
+                                    ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500'
+                                    : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
+                                    }`}
+                                placeholder="nama@perusahaan.com"
                             />
+                            {email && emailErr && (
+                                <p className="text-xs text-red-500 font-medium">{emailErr}</p>
+                            )}
+                        </div>
 
-                            <TextField
-                                label="Password"
-                                type={showPassword ? 'text' : 'password'}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                                fullWidth
-                                error={!!password && !!pwdErr}
-                                helperText={password && pwdErr ? pwdErr : ' '}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton
-                                                onClick={() => setShowPassword((v) => !v)}
-                                                edge="end"
-                                                aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                                            >
-                                                {showPassword ? <VisibilityOff /> : <Visibility />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                size="large"
-                                disableElevation
-                                disabled={loading}
-                            >
-                                {loading ? (mode === 'login' ? 'Memproses...' : 'Mendaftarkan...') : (mode === 'login' ? 'Masuk' : 'Daftar')}
-                            </Button>
-
-                            {mode === 'login' && (
-                                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                    <Link
-                                        component="button"
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <label className="block text-sm font-semibold text-slate-700" htmlFor="password">
+                                    Kata Sandi
+                                </label>
+                                {mode === 'login' && (
+                                    <button
                                         type="button"
                                         onClick={handleReset}
                                         disabled={loading}
-                                        underline="hover"
+                                        className="text-sm font-medium text-indigo-600 hover:text-indigo-500 disabled:opacity-50"
                                     >
-                                        Lupa sandi?
-                                    </Link>
-                                    <Link
-                                        component="button"
-                                        type="button"
-                                        onClick={() => {
-                                            setMode('register')
-                                            setError(null); setSuccess(null)
-                                        }}
-                                        underline="hover"
-                                    >
-                                        Buat akun baru
-                                    </Link>
-                                </Stack>
+                                        Lupa Sandi?
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="relative group">
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                                    className={`block w-full px-4 py-3.5 pr-12 bg-slate-50 border rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 outline-none transition-all ${!!password && !!pwdErr
+                                        ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500'
+                                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
+                                        }`}
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-full px-3 text-slate-400 hover:text-slate-600 focus:outline-none flex items-center justify-center transition-colors"
+                                    onClick={() => setShowPassword((v) => !v)}
+                                    tabIndex={-1}
+                                    aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                                >
+                                    {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                                </button>
+                            </div>
+                            {password && pwdErr && (
+                                <p className="text-xs text-red-500 font-medium">{pwdErr}</p>
                             )}
+                        </div>
 
-                            {mode === 'register' && (
-                                <Stack direction="row" justifyContent="flex-end">
-                                    <Link
-                                        component="button"
-                                        type="button"
-                                        onClick={() => {
-                                            setMode('login')
-                                            setError(null); setSuccess(null)
-                                        }}
-                                        underline="hover"
-                                    >
-                                        Sudah punya akun? Masuk
-                                    </Link>
-                                </Stack>
-                            )}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full relative group mt-8 overflow-hidden rounded-xl bg-slate-900 py-4 px-4 font-semibold text-white shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-[1px] hover:shadow-xl hover:shadow-slate-900/30 active:translate-y-0 active:shadow-md disabled:pointer-events-none disabled:opacity-70"
+                        >
+                            <span className="relative z-10 flex items-center justify-center gap-2">
+                                {loading && (
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                )}
+                                {loading ? 'Memproses...' : (mode === 'login' ? 'Masuk ke Dashboard' : 'Buat Akun')}
+                            </span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-cyan-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                        </button>
+                    </form>
 
-                            <Divider />
-
-                            <Typography variant="caption" color="text.secondary" textAlign="center">
-                                Dengan masuk/daftar, Anda menyetujui <b>Ketentuan Layanan</b> & <b>Kebijakan Privasi</b>.
-                            </Typography>
-                        </Stack>
-                    </Box>
-                </Box>
-            </Paper>
-        </Box>
+                    {/* Mode Toggle */}
+                    <div className="mt-8 text-center text-sm text-slate-600 font-medium">
+                        {mode === 'login' ? (
+                            <p>
+                                Belum punya akun?{' '}
+                                <button
+                                    onClick={() => {
+                                        setMode('register')
+                                        setError(null)
+                                        setSuccess(null)
+                                    }}
+                                    className="text-indigo-600 hover:text-indigo-500 font-semibold"
+                                >
+                                    Daftar Sekarang
+                                </button>
+                            </p>
+                        ) : (
+                            <p>
+                                Sudah punya akun?{' '}
+                                <button
+                                    onClick={() => {
+                                        setMode('login')
+                                        setError(null)
+                                        setSuccess(null)
+                                    }}
+                                    className="text-indigo-600 hover:text-indigo-500 font-semibold"
+                                >
+                                    Masuk Disini
+                                </button>
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
     )
 }
