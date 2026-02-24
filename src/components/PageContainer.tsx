@@ -11,10 +11,11 @@ export interface PageContainerProps {
     title?: string;
     breadcrumbs?: Breadcrumb[];
     actions?: React.ReactNode;
+    icon?: React.ReactNode;
 }
 
 export default function PageContainer(props: PageContainerProps) {
-    const { children, breadcrumbs, title, actions = null } = props;
+    const { children, breadcrumbs, title, actions = null, icon } = props;
 
     return (
         <div className="flex flex-col flex-1 pb-10">
@@ -46,11 +47,18 @@ export default function PageContainer(props: PageContainerProps) {
 
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    {title && (
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                            {title}
-                        </h1>
-                    )}
+                    <div className="flex items-center gap-3">
+                        {icon && (
+                            <div className="flex-shrink-0">
+                                {icon}
+                            </div>
+                        )}
+                        {title && (
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+                                {title}
+                            </h1>
+                        )}
+                    </div>
                     <div className="flex items-center gap-2">
                         {actions}
                     </div>

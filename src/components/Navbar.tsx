@@ -6,10 +6,10 @@ import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 
 const navItems = [
-    { label: 'Dashboard', path: '/' },
-    { label: 'Data Kalibrasi', path: '/data-inputan' },
-    { label: 'Data Inventaris', path: '/data-inventaris' },
-    { label: 'SPH', path: '/mass-import' },
+    { label: 'Dashboard', path: '/', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
+    { label: 'Data Kalibrasi', path: '/data-inputan', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
+    { label: 'Data Inventaris', path: '/data-inventaris', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg> },
+    { label: 'SPH', path: '/mass-import', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg> },
 ];
 
 function getInitials(name?: string | null) {
@@ -83,12 +83,13 @@ export default function Navbar() {
                                     key={item.label}
                                     to={item.path}
                                     className={({ isActive }) => `
-                                        px-3 py-2 rounded-md text-sm font-medium transition-all
+                                        flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all
                                         ${isActive
                                             ? 'bg-blue-700 text-white shadow-inner scale-105'
                                             : 'text-blue-100 hover:bg-blue-500 hover:text-white'}
                                     `}
                                 >
+                                    {item.icon}
                                     {item.label}
                                 </NavLink>
                             ))}
@@ -151,12 +152,13 @@ export default function Navbar() {
                                     to={item.path}
                                     onClick={() => setMobileOpen(false)}
                                     className={({ isActive }) => `
-                                        block px-3 py-2 rounded-md text-base font-medium
+                                        flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium
                                         ${isActive
                                             ? 'bg-blue-800 text-white'
                                             : 'text-blue-100 hover:bg-blue-600 hover:text-white'}
                                     `}
                                 >
+                                    {item.icon}
                                     {item.label}
                                 </NavLink>
                             ))}

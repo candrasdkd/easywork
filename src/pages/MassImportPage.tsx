@@ -4,16 +4,16 @@ import 'dayjs/locale/id';
 import * as XLSX from 'xlsx';
 
 // Firebase
-import { db, auth } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import {
     collection, getDocs, query, where, limit, getDoc, doc
 } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
 
 // UI
 import PageContainer from '../components/PageContainer';
 import { Button } from '../components/ui/Button';
 import useNotifications from '../hooks/useNotifications/useNotifications';
+import { useAuth } from '../contexts/AuthContext';
 
 dayjs.locale('id');
 
@@ -58,20 +58,15 @@ export default function SphPage() {
     const notifications = useNotifications();
     const [rawText, setRawText] = React.useState('');
 
+    const { user } = useAuth();
+    const uid = user?.uid ?? null;
+
     // Master data
     const [picName, setPicName] = React.useState<string>('');
-    const [uid, setUid] = React.useState<string | null>(auth.currentUser?.uid ?? null);
     const [loadingMaster, setLoadingMaster] = React.useState(true);
 
     // Item statuses
     const [itemStatuses, setItemStatuses] = React.useState<Record<string, ItemStatus>>({});
-
-    React.useEffect(() => {
-        const unsub = onAuthStateChanged(auth, (user) => {
-            setUid(user?.uid ?? null);
-        });
-        return unsub;
-    }, []);
 
     const loadMaster = React.useCallback(async (userId: string) => {
         setLoadingMaster(true);
@@ -145,15 +140,22 @@ export default function SphPage() {
             return;
         }
 
+        const sanitizeForExcel = (val: string) => {
+            if (/^[=+\-@]/.test(val)) {
+                return "'" + val;
+            }
+            return val;
+        };
+
         const tanggal = dayjs().format('DD MMMM YYYY');
         const rows = sphItems.map((item, idx) => ({
             'No': idx + 1,
-            'Nama Alat': item.name,
+            'Nama Alat': sanitizeForExcel(item.name),
             'Jumlah': item.count,
             'Satuan': 'Pcs',
             'Kondisi': STATUS_CONFIG[item.status].label,
             'Tanggal SPH': tanggal,
-            'Penanggungjawab': picName,
+            'Penanggungjawab': sanitizeForExcel(picName),
         }));
 
         const ws = XLSX.utils.json_to_sheet(rows);
@@ -183,9 +185,17 @@ export default function SphPage() {
         notifications.show(`Berhasil mengekspor ${sphItems.length} item ke Excel.`, { severity: 'success' });
     };
 
+    const pageIcon = (
+        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+        </div>
+    );
+
     if (loadingMaster) {
         return (
-            <PageContainer title="SPH — Survei Peralatan">
+            <PageContainer title="SPH — Survei Peralatan" icon={pageIcon}>
                 <div className="flex items-center justify-center p-20">
                     <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
                 </div>
@@ -194,7 +204,7 @@ export default function SphPage() {
     }
 
     return (
-        <PageContainer title="SPH — Survei Peralatan">
+        <PageContainer title="SPH — Survei Peralatan" icon={pageIcon}>
             {/* Header/Description Area */}
             <div className="mb-8">
                 <p className="text-gray-500 text-sm md:text-base">
