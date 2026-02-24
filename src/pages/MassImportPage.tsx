@@ -25,27 +25,30 @@ interface SphItem {
     status: ItemStatus;
 }
 
-const STATUS_CONFIG: Record<ItemStatus, { label: string; color: string; bg: string; border: string; dot: string }> = {
+const STATUS_CONFIG: Record<ItemStatus, { label: string; color: string; bg: string; border: string; dot: string; shadow: string }> = {
     bisa: {
         label: 'Bisa',
         color: 'text-emerald-700',
         bg: 'bg-emerald-50',
-        border: 'border-emerald-200',
+        border: 'border-emerald-200/60',
         dot: 'bg-emerald-500',
+        shadow: 'shadow-emerald-500/20',
     },
     kelistrikan: {
         label: 'Kelistrikan',
         color: 'text-blue-700',
         bg: 'bg-blue-50',
-        border: 'border-blue-200',
+        border: 'border-blue-200/60',
         dot: 'bg-blue-500',
+        shadow: 'shadow-blue-500/20',
     },
     tidak_bisa: {
         label: 'Tidak Bisa',
         color: 'text-red-700',
         bg: 'bg-red-50',
-        border: 'border-red-200',
+        border: 'border-red-200/60',
         dot: 'bg-red-500',
+        shadow: 'shadow-red-500/20',
     },
 };
 
@@ -192,146 +195,170 @@ export default function SphPage() {
 
     return (
         <PageContainer title="SPH — Survei Peralatan">
-            <div className="space-y-6">
+            {/* Header/Description Area */}
+            <div className="mb-8">
+                <p className="text-gray-500 text-sm md:text-base">
+                    Kelola dan rekapitulasi data survei peralatan dengan cepat. Paste daftar alat, tentukan status, dan ekspor ke Excel dalam hitungan detik.
+                </p>
+            </div>
 
-                {/* Step 1 — Input */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-100 text-blue-600 text-xs font-bold">1</span>
-                                <h2 className="text-lg font-bold text-gray-900">Input Daftar Peralatan</h2>
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                {/* Left Column: Input */}
+                <div className="xl:col-span-4 flex flex-col gap-6">
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-200/60 p-6 flex flex-col h-full relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                        {/* decorative gradient blob */}
+                        <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-blue-50/50 blur-2xl pointer-events-none"></div>
+
+                        <div className="flex items-start justify-between mb-6 relative z-10">
+                            <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-blue-600 text-white text-sm font-bold shadow-md shadow-blue-500/20">
+                                        1
+                                    </div>
+                                    <h2 className="text-lg font-bold text-gray-900 tracking-tight">Input Alat</h2>
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                    Paste daftar alat di bawah ini.
+                                </p>
                             </div>
-                            <p className="text-sm text-gray-500 ml-9">
-                                Tempelkan daftar nama alat. Satu baris = satu alat. Nama yang sama otomatis dijumlahkan.
-                            </p>
+
+                            {rawText.trim() && (
+                                <button
+                                    onClick={() => { setRawText(''); setItemStatuses({}); }}
+                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                    title="Hapus Semua"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            )}
                         </div>
-                        {rawText.trim() && (
-                            <button
-                                onClick={() => { setRawText(''); setItemStatuses({}); }}
-                                className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 font-medium px-3 py-2 border border-red-200 hover:bg-red-50 rounded-lg transition-colors shrink-0"
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                                Hapus Semua
-                            </button>
-                        )}
+
+                        <textarea
+                            className="w-full flex-1 min-h-[400px] xl:min-h-[600px] p-5 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-mono leading-relaxed resize-none text-gray-700 placeholder-gray-400"
+                            placeholder={"Contoh:\n\nSWD\nInfrared 3 Lampu\nUSG\nSWD\nInfusion pump"}
+                            value={rawText}
+                            onChange={(e) => setRawText(e.target.value)}
+                        />
                     </div>
-                    <textarea
-                        rows={8}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-mono resize-none"
-                        placeholder={"Contoh:\nSWD\nInfrared 3 Lampu\nUSG\nSWD\nInfusion pump"}
-                        value={rawText}
-                        onChange={(e) => setRawText(e.target.value)}
-                    />
                 </div>
 
-                {/* Step 2 — Preview */}
-                {sphItems.length > 0 && (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        {/* Header */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 text-xs font-bold">2</span>
-                                    <h2 className="text-lg font-bold text-gray-900">Preview & Tentukan Status</h2>
+                {/* Right Column: Preview & Action */}
+                <div className="xl:col-span-8 flex flex-col gap-6">
+                    {sphItems.length === 0 ? (
+                        <div className="bg-white/40 border-2 border-dashed border-gray-200 rounded-3xl p-12 flex flex-col items-center justify-center text-center h-full min-h-[400px] xl:min-h-[600px]">
+                            <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center mb-6">
+                                <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">Belum Ada Data</h3>
+                            <p className="text-gray-500 max-w-sm leading-relaxed">
+                                Paste daftar peralatan di kolom sebelah kiri, dan hasilnya akan otomatis terekapitulasi di sini.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-200/60 flex flex-col h-full animate-in fade-in slide-in-from-bottom-8 duration-500 overflow-hidden relative">
+                            {/* Header Section */}
+                            <div className="p-6 sm:p-8 border-b border-gray-100 bg-white relative z-10">
+                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500 text-white text-sm font-bold shadow-md shadow-emerald-500/20">
+                                                2
+                                            </div>
+                                            <h2 className="text-lg font-bold text-gray-900 tracking-tight">Preview & Status</h2>
+                                        </div>
+                                        <p className="text-sm text-gray-500">
+                                            Klik status pada tabel untuk mengubah kondisinya.
+                                        </p>
+                                    </div>
+
+                                    {/* Action Button */}
+                                    <Button
+                                        variant="primary"
+                                        className="shrink-0 bg-gray-900 hover:bg-black text-white border-0 shadow-xl shadow-gray-900/20 rounded-xl px-6 py-2.5 font-medium transition-all active:scale-95 flex items-center gap-2"
+                                        onClick={handleExportExcel}
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Export Excel
+                                    </Button>
                                 </div>
-                                <p className="text-sm text-gray-500 ml-9">Klik tiap baris untuk mengganti status kondisi alat.</p>
+
+                                {/* Stats & Legend */}
+                                <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                    <div className="bg-gray-50 rounded-2xl p-4 flex flex-col justify-center">
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Jenis</span>
+                                        <span className="text-2xl font-bold text-gray-900">{stats.grouped}</span>
+                                    </div>
+                                    <div className="bg-emerald-50/50 rounded-2xl p-4 flex flex-col justify-center border border-emerald-100/50">
+                                        <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bisa
+                                        </span>
+                                        <span className="text-2xl font-bold text-emerald-700">{stats.bisa}</span>
+                                    </div>
+                                    <div className="bg-blue-50/50 rounded-2xl p-4 flex flex-col justify-center border border-blue-100/50">
+                                        <span className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">
+                                            <span className="w-2 h-2 rounded-full bg-blue-500"></span> Kelistrikan
+                                        </span>
+                                        <span className="text-2xl font-bold text-blue-700">{stats.kelistrikan}</span>
+                                    </div>
+                                    <div className="bg-red-50/50 rounded-2xl p-4 flex flex-col justify-center border border-red-100/50">
+                                        <span className="flex items-center gap-1.5 text-xs font-semibold text-red-600 uppercase tracking-wider mb-1">
+                                            <span className="w-2 h-2 rounded-full bg-red-500"></span> Tidak Bisa
+                                        </span>
+                                        <span className="text-2xl font-bold text-red-700">{stats.tidak_bisa}</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Legend */}
-                            <div className="flex flex-wrap items-center gap-3 ml-9 sm:ml-0">
-                                {(Object.entries(STATUS_CONFIG) as [ItemStatus, typeof STATUS_CONFIG[ItemStatus]][]).map(([key, cfg]) => (
-                                    <span key={key} className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
-                                        <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`}></span>
-                                        {cfg.label}
-                                    </span>
-                                ))}
-                                <span className="text-xs text-gray-400 italic">← klik baris untuk ganti</span>
+                            {/* Table */}
+                            <div className="flex-1 overflow-hidden bg-white flex flex-col">
+                                <div className="overflow-y-auto max-h-[500px] xl:max-h-[600px] xl:min-h-[400px]">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-100 z-10">
+                                            <tr>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-16">No</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Nama Alat</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center w-28">Jumlah</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center w-40">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50/80">
+                                            {sphItems.map((item, idx) => {
+                                                const cfg = STATUS_CONFIG[item.status];
+                                                return (
+                                                    <tr
+                                                        key={item.name}
+                                                        onClick={() => cycleStatus(item.name)}
+                                                        className="cursor-pointer hover:bg-gray-50/80 transition-colors group"
+                                                    >
+                                                        <td className="px-6 py-4 text-sm text-gray-400 font-mono transition-colors group-hover:text-gray-500">{idx + 1}</td>
+                                                        <td className="px-6 py-4 text-sm font-semibold text-gray-800">{item.name}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 rounded-lg bg-gray-100/80 text-gray-700 text-xs font-bold border border-gray-200/60">
+                                                                {item.count}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${cfg.bg} ${cfg.color} ${cfg.border} shadow-sm ${cfg.shadow}`}>
+                                                                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`}></span>
+                                                                {cfg.label}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
-
-                        {/* Stats badges */}
-                        <div className="flex flex-wrap gap-2 mb-5 ml-9 sm:ml-0">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
-                                Total baris: {stats.original}
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>Bisa: {stats.bisa}
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>Kelistrikan: {stats.kelistrikan}
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
-                                <span className="w-2 h-2 rounded-full bg-red-500"></span>Tidak Bisa: {stats.tidak_bisa}
-                            </span>
-                        </div>
-
-                        {/* Table */}
-                        <div className="border border-gray-100 rounded-xl overflow-hidden">
-                            <div className="max-h-[480px] overflow-y-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead className="sticky top-0 bg-gray-50 border-b border-gray-100 z-10">
-                                        <tr>
-                                            <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider w-10">#</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Nama Alat</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-center w-24">Jml</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-center w-36">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {sphItems.map((item, idx) => {
-                                            const cfg = STATUS_CONFIG[item.status];
-                                            return (
-                                                <tr
-                                                    key={item.name}
-                                                    onClick={() => cycleStatus(item.name)}
-                                                    className="cursor-pointer hover:bg-gray-50 transition-colors group select-none"
-                                                >
-                                                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">{idx + 1}</td>
-                                                    <td className="px-4 py-3 text-sm font-medium text-gray-800">{item.name}</td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">
-                                                            {item.count}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${cfg.bg} ${cfg.color} ${cfg.border}`}>
-                                                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`}></span>
-                                                            {cfg.label}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Actions */}
-                {sphItems.length > 0 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                        <div className="text-sm text-gray-500">
-                            <span className="font-semibold text-gray-800">{stats.grouped} jenis alat</span> siap diekspor ·{' '}
-                            <span className="text-gray-400">{dayjs().format('DD MMMM YYYY')}</span>
-                        </div>
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            onClick={handleExportExcel}
-                            className="w-full sm:w-auto min-w-[220px] shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 border-emerald-600 hover:border-emerald-700"
-                        >
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Export ke Excel
-                        </Button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </PageContainer>
     );
