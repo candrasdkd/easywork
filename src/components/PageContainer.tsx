@@ -1,46 +1,12 @@
-'use client';
 import * as React from 'react';
-import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import Breadcrumbs, { breadcrumbsClasses } from '@mui/material/Breadcrumbs';
-import Container, { type ContainerProps } from '@mui/material/Container';
-import MuiLink from '@mui/material/Link';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { Link } from 'react-router';
-
-const PageContentHeader = styled('div')(({ theme }) => ({
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing(2),
-}));
-
-const PageHeaderBreadcrumbs = styled(Breadcrumbs)(({ theme }) => ({
-    margin: theme.spacing(1, 0),
-    [`& .${breadcrumbsClasses.separator}`]: {
-        color: (theme.vars || theme).palette.action.disabled,
-        margin: 1,
-    },
-    [`& .${breadcrumbsClasses.ol}`]: {
-        alignItems: 'center',
-    },
-}));
-
-const PageHeaderToolbar = styled('div')(({ theme }) => ({
-    display: 'flex',
-    flexDirection: 'row',
-    gap: theme.spacing(1),
-    // Ensure the toolbar is always on the right side, even after wrapping
-    marginLeft: 'auto',
-}));
 
 export interface Breadcrumb {
     title: string;
     path?: string;
 }
-export interface PageContainerProps extends ContainerProps {
+
+export interface PageContainerProps {
     children?: React.ReactNode;
     title?: string;
     breadcrumbs?: Breadcrumb[];
@@ -51,45 +17,50 @@ export default function PageContainer(props: PageContainerProps) {
     const { children, breadcrumbs, title, actions = null } = props;
 
     return (
-        <Container sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <Stack sx={{ flex: 1, my: 2 }} spacing={2}>
-                <Stack>
-                    <PageHeaderBreadcrumbs
-                        aria-label="breadcrumb"
-                        separator={<NavigateNextRoundedIcon fontSize="small" />}
-                    >
-                        {breadcrumbs
-                            ? breadcrumbs.map((breadcrumb, index) => {
-                                return breadcrumb.path ? (
-                                    <MuiLink
-                                        key={index}
-                                        component={Link}
-                                        underline="hover"
-                                        color="inherit"
-                                        to={breadcrumb.path}
-                                    >
-                                        {breadcrumb.title}
-                                    </MuiLink>
-                                ) : (
-                                    <Typography
-                                        key={index}
-                                        sx={{ color: 'text.primary', fontWeight: 600 }}
-                                    >
-                                        {breadcrumb.title}
-                                    </Typography>
-                                );
-                            })
-                            : null}
-                    </PageHeaderBreadcrumbs>
-                    <PageContentHeader>
-                        {title ? <Typography variant="h4">{title}</Typography> : null}
-                        <PageHeaderToolbar>{actions}</PageHeaderToolbar>
-                    </PageContentHeader>
-                </Stack>
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    {children}
-                </Box>
-            </Stack>
-        </Container>
+        <div className="flex flex-col flex-1 pb-10">
+            <div className="mb-6">
+                {/* Breadcrumbs */}
+                <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+                    {breadcrumbs?.map((breadcrumb, index) => (
+                        <React.Fragment key={index}>
+                            {breadcrumb.path ? (
+                                <Link
+                                    to={breadcrumb.path}
+                                    className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                >
+                                    {breadcrumb.title}
+                                </Link>
+                            ) : (
+                                <span className="font-semibold text-gray-900 dark:text-white">
+                                    {breadcrumb.title}
+                                </span>
+                            )}
+                            {index < breadcrumbs.length - 1 && (
+                                <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            )}
+                        </React.Fragment>
+                    ))}
+                </nav>
+
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    {title && (
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+                            {title}
+                        </h1>
+                    )}
+                    <div className="flex items-center gap-2">
+                        {actions}
+                    </div>
+                </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 flex flex-col">
+                {children}
+            </div>
+        </div>
     );
 }

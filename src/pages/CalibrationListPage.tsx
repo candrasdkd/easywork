@@ -4,22 +4,11 @@ import 'dayjs/locale/id';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
-// MUI/XDG
-import {
-    GridActionsCellItem,
-    type GridColDef,
-    type GridPaginationModel,
-} from '@mui/x-data-grid';
-import {
-    Dialog, DialogTitle, DialogContent, DialogActions, Button,
-    Stack, TextField, Autocomplete, Alert, IconButton, ButtonGroup
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import { useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
+// UI Kit
+import { Modal } from '../components/ui/Modal';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import CalibrationList, { type Column, type PaginationModel } from '../components/CalibrationList';
 
 // Hooks
 import { useDialogs } from '../hooks/useDialogs/useDialogs';
@@ -32,12 +21,6 @@ import {
     addDoc, updateDoc, where, limit, getDoc
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-
-// UI
-import CalibrationList from '../components/CalibrationList';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 dayjs.locale('id');
 
@@ -55,7 +38,7 @@ export type CalibrationItem = {
     serial_number: string;
     tool_name: string;
     type_name: string;
-    catatan?: string; // ⬅️ NEW
+    catatan?: string;
 };
 
 
@@ -105,7 +88,7 @@ export default function CalibrationListPage() {
     const [selectedMonth, setSelectedMonth] = React.useState(dayjs()); // default: bulan ini
 
     // Pagination (server-mode UX, but data paginated locally)
-    const [paginationModel, setPaginationModel] = React.useState<GridPaginationModel>({
+    const [paginationModel, setPaginationModel] = React.useState<PaginationModel>({
         page: 0,
         pageSize: 30,
     });
@@ -291,8 +274,6 @@ export default function CalibrationListPage() {
     const [editingItem, setEditingItem] = React.useState<CalibrationItem | null>(null);
     const [form, setForm] = React.useState<Omit<CalibrationItem, 'id'>>(emptyForm);
     const [saving, setSaving] = React.useState(false);
-    const theme = useTheme();
-    const isXs = useMediaQuery(theme.breakpoints.down('sm')); // < 600px
 
     const openCreate = React.useCallback(() => {
         setEditingItem(null);
@@ -401,70 +382,63 @@ export default function CalibrationListPage() {
     );
 
     // === Columns ===
-    const columns = React.useMemo<GridColDef<CalibrationItem>[]>(
+    const columns = React.useMemo<Column<CalibrationItem>[]>(
         () => [
             {
-                field: 'label_number', headerName: 'NO. LABEL', width: 160, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(p.row.label_number, searchText)
+                header: 'NO. LABEL',
+                accessor: (row) => highlightMatch(row.label_number, searchText),
+                align: 'center',
             },
             {
-                field: 'tool_name', headerName: 'NAMA ALAT', width: 220, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(p.row.tool_name, searchText)
+                header: 'NAMA ALAT',
+                accessor: (row) => highlightMatch(row.tool_name, searchText),
+                align: 'center',
             },
             {
-                field: 'brand_name', headerName: 'MEREK', width: 160, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(p.row.brand_name, searchText)
+                header: 'MEREK',
+                accessor: (row) => highlightMatch(row.brand_name, searchText),
+                align: 'center',
             },
             {
-                field: 'type_name', headerName: 'TIPE', width: 160, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(p.row.type_name, searchText)
+                header: 'RUANGAN',
+                accessor: (row) => highlightMatch(row.room_name, searchText),
+                align: 'center',
             },
             {
-                field: 'serial_number', headerName: 'NO. SERI', width: 160, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(p.row.serial_number, searchText)
+                header: 'TANGGAL PELAKSANAAN',
+                accessor: (row) => highlightMatch(implementationDateToDisplay(row.implementation_date), searchText),
+                align: 'center',
             },
             {
-                field: 'room_name', headerName: 'RUANGAN', width: 160, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(p.row.room_name, searchText)
+                header: 'PENANGGUNG JAWAB',
+                accessor: (row) => highlightMatch(row.person_responsible, searchText),
+                align: 'center',
             },
             {
-                field: 'capacity', headerName: 'KAPASITAS', width: 140, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(p.row.capacity, searchText)
-            },
-            {
-                field: 'level_of_accuracy', headerName: 'TINGKAT KETELITIAN', width: 160, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(p.row.level_of_accuracy, searchText)
-            },
-            {
-                field: 'implementation_date',
-                headerName: 'TANGGAL PELAKSANAAN',
-                type: 'date',
-                valueGetter: (value) => {
-                    if (!value) return null;
-                    if (value && typeof value === 'object' && (value as any) instanceof Timestamp) return (value as Timestamp).toDate();
-                    if (typeof value === 'string') return new Date(value);
-                    return value as Date;
-                },
-                valueFormatter: (value) => (value ? dayjs(value as Date).format('DD MMMM YYYY') : ''),
-                width: 180, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(implementationDateToDisplay(p.row.implementation_date), searchText),
-            },
-            {
-                field: 'person_responsible', headerName: 'PENANGGUNG JAWAB', width: 220, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(p.row.person_responsible, searchText)
-            },
-            {
-                field: 'catatan', headerName: 'CATATAN', width: 220, align: 'center', headerAlign: 'center',
-                renderCell: (p) => highlightMatch(p.row.catatan, searchText)
-            },
-            {
-                field: 'actions', headerName: 'ACTIONS', type: 'actions', width: 100, align: 'center', headerAlign: 'center',
-                getActions: ({ row }) => [
-                    <GridActionsCellItem key="edit" icon={<EditIcon />} label="Edit"
-                        onClick={(e) => { e.stopPropagation(); handleEdit(row)(); }} />,
-                    <GridActionsCellItem key="delete" icon={<DeleteIcon />} label="Delete"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(row)(); }} />,
-                ],
+                header: 'AKSI',
+                align: 'center',
+                accessor: (row) => (
+                    <div className="flex items-center justify-center gap-2">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleEdit(row)(); }}
+                            className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
+                            title="Edit"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(row)(); }}
+                            className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                            title="Delete"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                ),
             },
         ],
         [searchText, handleEdit, handleDelete]
@@ -612,81 +586,57 @@ export default function CalibrationListPage() {
 
     return (
         <>
-            <Stack
-                direction={{ xs: 'row', sm: 'row' }}
-                spacing={{ xs: 1, sm: 1 }}
-                padding={{ xs: 2, sm: 3 }}
-                alignItems={{ xs: 'stretch', sm: 'stretch' }}
-                justifyContent="space-between"
-            >
-                <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                    <DatePicker
-                        label={isXs ? undefined : "Filter Bulan"}
-                        views={['year', 'month']}
-                        openTo="month"
-                        value={selectedMonth}
-                        format="MMMM YYYY"
-                        onChange={(v) => {
-                            if (v) {
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 lg:p-6 pb-0">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="flex-1 sm:w-64">
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 px-1">
+                            Filter Bulan
+                        </label>
+                        <input
+                            type="month"
+                            value={selectedMonth.format('YYYY-MM')}
+                            onChange={(e) => {
+                                const v = dayjs(e.target.value);
                                 setSelectedMonth(v);
                                 setPaginationModel((p) => ({ ...p, page: 0 }));
-                            }
-                        }}
-                        slotProps={{
-                            textField: {
-                                size: 'small',
-                                fullWidth: isXs,
-                                sx: { minWidth: { xs: 'auto', sm: 220 } },
-                            },
-                        }}
-                    />
-                </LocalizationProvider>
+                            }}
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white outline-none transition-all text-sm font-medium"
+                        />
+                    </div>
+                </div>
 
-                {/* Navigasi bulan: icon di mobile, teks di desktop */}
-                {isXs ? (
-                    <ButtonGroup variant="outlined" size="small" sx={{ alignSelf: { xs: 'stretch', sm: 'auto' } }}>
-                        <IconButton
-                            onClick={() => {
-                                setSelectedMonth((m) => m.subtract(1, 'month'));
-                                setPaginationModel((p) => ({ ...p, page: 0 }));
-                            }}
-                            size="small"
-                        >
-                            <ArrowBackIosNewIcon fontSize="inherit" />
-                        </IconButton>
-                        <IconButton
-                            onClick={() => {
-                                setSelectedMonth((m) => m.add(1, 'month'));
-                                setPaginationModel((p) => ({ ...p, page: 0 }));
-                            }}
-                            size="small"
-                        >
-                            <ArrowForwardIosIcon fontSize="inherit" />
-                        </IconButton>
-                    </ButtonGroup>
-                ) : (
-                    <Stack direction="row" spacing={1}>
-                        <Button
-                            variant="outlined"
-                            onClick={() => {
-                                setSelectedMonth((m) => m.subtract(1, 'month'));
-                                setPaginationModel((p) => ({ ...p, page: 0 }));
-                            }}
-                        >
-                            Bulan Sebelumnya
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            onClick={() => {
-                                setSelectedMonth((m) => m.add(1, 'month'));
-                                setPaginationModel((p) => ({ ...p, page: 0 }));
-                            }}
-                        >
-                            Bulan Berikutnya
-                        </Button>
-                    </Stack>
-                )}
-            </Stack >
+                <div className="flex items-center gap-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-xl w-full sm:w-auto">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            setSelectedMonth((m) => m.subtract(1, 'month'));
+                            setPaginationModel((p) => ({ ...p, page: 0 }));
+                        }}
+                        className="flex-1 sm:flex-none py-2"
+                    >
+                        <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        <span className="hidden sm:inline">Sebelumnya</span>
+                    </Button>
+                    <div className="w-px h-6 bg-gray-200 dark:bg-slate-700 hidden sm:block"></div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            setSelectedMonth((m) => m.add(1, 'month'));
+                            setPaginationModel((p) => ({ ...p, page: 0 }));
+                        }}
+                        className="flex-1 sm:flex-none py-2"
+                    >
+                        <span className="hidden sm:inline">Berikutnya</span>
+                        <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </Button>
+                </div>
+            </div>
 
             <CalibrationList<CalibrationItem>
                 rows={rows}
@@ -703,166 +653,208 @@ export default function CalibrationListPage() {
                 onExport={handleExport}
             />
 
-            {/* Create/Edit Dialog */}
-            <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="md" keepMounted>
-                <DialogTitle>{editingItem ? 'Edit Data' : 'Tambah Data'}</DialogTitle>
-                <DialogContent dividers>
-                    {error && <Alert severity="error" sx={{ mb: 2 }}>{error.message}</Alert>}
+            {/* Create/Edit Modal */}
+            <Modal
+                open={dialogOpen}
+                onClose={closeDialog}
+                title={editingItem ? 'Edit Data Kalibrasi' : 'Tambah Data Kalibrasi'}
+                maxWidth="2xl"
+                footer={
+                    <div className="flex justify-end gap-3 w-full">
+                        <Button variant="outline" onClick={cancelDialog} disabled={saving}>
+                            Batal
+                        </Button>
+                        <Button variant="primary" onClick={handleSave} disabled={disableSave}>
+                            {saving ? 'Menyimpan...' : (editingItem ? 'Simpan Perubahan' : 'Tambah Data')}
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="space-y-5">
+                    {/* PIC Info */}
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-300 flex items-center gap-3">
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Penanggung Jawab: <span className="font-bold">{picName || 'Muat profil...'}</span></span>
+                    </div>
 
-                    {/* Info PIC otomatis */}
-                    <Alert severity="info" sx={{ mb: 2 }}>
-                        Penanggung Jawab diambil otomatis dari profil pengguna
-                    </Alert>
-
-                    <Stack spacing={2} mt={1}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Nama Alat */}
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Autocomplete
-                                options={toolOptions.map(o => o.name)}
-                                value={form.tool_name || ''}
-                                onChange={(_, v) => setForm(f => ({ ...f, tool_name: v || '' }))}
-                                onInputChange={(_, v) => setForm(f => ({ ...f, tool_name: v || '' }))} // penting: hindari undefined
-                                renderInput={(params) => <TextField {...params} label="Nama Alat" />}
-                                freeSolo
-                                fullWidth
-                            />
-                            <Button variant="outlined" onClick={() => setAddDialogOpen('tool')}>+</Button>
-                        </Stack>
+                        <div className="relative group">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Nama Alat</label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Input
+                                        list="tool-options"
+                                        value={form.tool_name}
+                                        onChange={(e) => setForm(f => ({ ...f, tool_name: e.target.value }))}
+                                        placeholder="Ketik atau pilih alat"
+                                        className="w-full"
+                                    />
+                                    <datalist id="tool-options">
+                                        {toolOptions.map(o => <option key={o.id} value={o.name} />)}
+                                    </datalist>
+                                </div>
+                                <button
+                                    onClick={() => setAddDialogOpen('tool')}
+                                    className="p-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors border border-gray-200 dark:border-slate-700"
+                                    title="Tambah Alat Baru"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
 
                         {/* Merek */}
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Autocomplete
-                                options={brandOptions.map(o => o.name)}
-                                value={form.brand_name || ''}
-                                onChange={(_, v) => setForm(f => ({ ...f, brand_name: v || '' }))}
-                                onInputChange={(_, v) => setForm(f => ({ ...f, brand_name: v || '' }))} // penting
-                                renderInput={(params) => <TextField {...params} label="Merek" />}
-                                freeSolo
-                                fullWidth
-                            />
-                            <Button variant="outlined" onClick={() => setAddDialogOpen('brand')}>+</Button>
-                        </Stack>
+                        <div className="relative group">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Merek</label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Input
+                                        list="brand-options"
+                                        value={form.brand_name}
+                                        onChange={(e) => setForm(f => ({ ...f, brand_name: e.target.value }))}
+                                        placeholder="Ketik atau pilih merek"
+                                        className="w-full"
+                                    />
+                                    <datalist id="brand-options">
+                                        {brandOptions.map(o => <option key={o.id} value={o.name} />)}
+                                    </datalist>
+                                </div>
+                                <button
+                                    onClick={() => setAddDialogOpen('brand')}
+                                    className="p-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors border border-gray-200 dark:border-slate-700"
+                                    title="Tambah Merek Baru"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
 
-                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                            <TextField
-                                label="Tipe"
-                                value={form.type_name}
-                                onChange={(e) => setForm(f => ({ ...f, type_name: e.target.value }))}
-                                fullWidth
-                            />
-                            <TextField
-                                label="No. Seri"
-                                value={form.serial_number}
-                                onChange={(e) => setForm(f => ({ ...f, serial_number: e.target.value }))}
-                                fullWidth
-                            />
-                        </Stack>
-
-                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                            <TextField
-                                label="Tingkat Ketelitian"
-                                value={form.level_of_accuracy}
-                                onChange={(e) => setForm(f => ({ ...f, level_of_accuracy: e.target.value }))}
-                                fullWidth
-                            />
-                            <TextField
-                                label="Kapasitas"
-                                value={form.capacity}
-                                onChange={(e) => setForm(f => ({ ...f, capacity: e.target.value }))}
-                                fullWidth
-                            />
-                        </Stack>
-
-                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                            <TextField
-                                label="No. Label"
-                                value={form.label_number}
-                                onChange={(e) => setForm(f => ({ ...f, label_number: e.target.value }))}
-                                fullWidth
-                            />
-                        </Stack>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Autocomplete
-                                options={roomOptions.map(o => o.name)}
-                                value={form.room_name || ''}
-                                onChange={(_, v) => setForm(f => ({ ...f, room_name: v || '' }))}
-                                onInputChange={(_, v) => setForm(f => ({ ...f, room_name: v || '' }))}
-                                renderInput={(params) => <TextField {...params} label="Ruangan" />}
-                                freeSolo
-                                fullWidth
-                            />
-                            <Button variant="outlined" onClick={() => setAddDialogOpen('ruangan')}>+</Button>
-                        </Stack>
-                        {/* Penanggung Jawab: tampilkan, tapi disable */}
-                        <TextField
-                            label="Penanggung Jawab (otomatis)"
-                            value={picName}
-                            fullWidth
-                            disabled
-                            helperText={loadingPic ? 'Memuat dari users…' : (picName ? 'Diambil dari profil' : 'Belum ada pic_name di users')}
+                        <Input
+                            label="Tipe"
+                            value={form.type_name}
+                            onChange={(e) => setForm(f => ({ ...f, type_name: e.target.value }))}
+                            placeholder="Contoh: ACS-30"
+                        />
+                        <Input
+                            label="No. Seri"
+                            value={form.serial_number}
+                            onChange={(e) => setForm(f => ({ ...f, serial_number: e.target.value }))}
+                            placeholder="Contoh: SN123456"
+                        />
+                        <Input
+                            label="Tingkat Ketelitian"
+                            value={form.level_of_accuracy}
+                            onChange={(e) => setForm(f => ({ ...f, level_of_accuracy: e.target.value }))}
+                            placeholder="Contoh: 1g"
+                        />
+                        <Input
+                            label="Kapasitas"
+                            value={form.capacity}
+                            onChange={(e) => setForm(f => ({ ...f, capacity: e.target.value }))}
+                            placeholder="Contoh: 30kg"
+                        />
+                        <Input
+                            label="No. Label"
+                            value={form.label_number}
+                            onChange={(e) => setForm(f => ({ ...f, label_number: e.target.value }))}
+                            placeholder="Contoh: LAB-001"
                         />
 
-                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                                <DatePicker
-                                    label="Tanggal Pelaksanaan"
-                                    disabled={saving}
-                                    value={form.implementation_date ? dayjs(toDate(form.implementation_date)) : null}
-                                    format="DD MMMM YYYY"
-                                    onChange={(value) => {
-                                        setForm(f => ({
-                                            ...f,
-                                            implementation_date: value ? value.toDate() : null
-                                        }))
-                                    }}
-                                    slotProps={{
-                                        textField: {
-                                            fullWidth: true,
-                                        },
-                                    }}
-                                />
-                            </LocalizationProvider>
-                        </Stack>
+                        {/* Ruangan */}
+                        <div className="relative group">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Ruangan</label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Input
+                                        list="room-options"
+                                        value={form.room_name}
+                                        onChange={(e) => setForm(f => ({ ...f, room_name: e.target.value }))}
+                                        placeholder="Pilih ruangan"
+                                        className="w-full"
+                                    />
+                                    <datalist id="room-options">
+                                        {roomOptions.map(o => <option key={o.id} value={o.name} />)}
+                                    </datalist>
+                                </div>
+                                <button
+                                    onClick={() => setAddDialogOpen('ruangan')}
+                                    className="p-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors border border-gray-200 dark:border-slate-700"
+                                    title="Tambah Ruangan Baru"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
 
-                        <TextField
-                            label="Catatan"
-                            value={form.catatan}
-                            onChange={(e) => setForm(f => ({ ...f, catatan: e.target.value }))}
-                            fullWidth
-                            multiline
-                            minRows={5}
-                        />
+                        <div className="col-span-1 md:col-span-2">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Tanggal Pelaksanaan</label>
+                            <Input
+                                type="date"
+                                disabled={saving}
+                                value={form.implementation_date ? dayjs(toDate(form.implementation_date)).format('YYYY-MM-DD') : ''}
+                                onChange={(e) => {
+                                    setForm(f => ({
+                                        ...f,
+                                        implementation_date: e.target.value ? new Date(e.target.value) : null
+                                    }))
+                                }}
+                                className="w-full"
+                            />
+                        </div>
 
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={cancelDialog} disabled={saving}>Batal</Button>
-                    <Button onClick={handleSave} variant="contained" disabled={disableSave}>
-                        {editingItem ? 'Simpan Perubahan' : 'Tambah'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                        <div className="col-span-1 md:col-span-2">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Catatan</label>
+                            <textarea
+                                value={form.catatan}
+                                onChange={(e) => setForm(f => ({ ...f, catatan: e.target.value }))}
+                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white outline-none transition-all text-sm min-h-[120px]"
+                                placeholder="Tambahkan catatan jika ada..."
+                            />
+                        </div>
+                    </div>
+                </div>
+            </Modal>
 
-            {/* Mini-Dialog: Tambah Master Tool/Brand */}
-            <Dialog open={!!addDialogOpen} onClose={() => setAddDialogOpen(null)}>
-                <DialogTitle>Tambah {addDialogOpen === 'tool' ? 'Nama Alat' : 'Merek'}</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        label="Nama"
+            {/* Mini-Modal: Tambah Master Tool/Brand */}
+            <Modal
+                open={!!addDialogOpen}
+                onClose={() => setAddDialogOpen(null)}
+                title={`Tambah ${displayNameMap[addDialogOpen || ''] || ''}`}
+                footer={
+                    <div className="flex justify-end gap-3 w-full">
+                        <Button variant="outline" onClick={() => setAddDialogOpen(null)} disabled={savingMaster}>
+                            Batal
+                        </Button>
+                        <Button
+                            variant="primary"
+                            onClick={handleAddMaster}
+                            disabled={savingMaster || !newName.trim()}
+                        >
+                            Simpan
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="p-1">
+                    <Input
+                        label={`Nama ${displayNameMap[addDialogOpen || ''] || ''}`}
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
                         autoFocus
-                        fullWidth
-                        sx={{ mt: 1, minWidth: 320 }}
+                        placeholder="Ketik nama baru..."
+                        className="w-full"
                     />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setAddDialogOpen(null)} disabled={savingMaster}>Batal</Button>
-                    <Button onClick={handleAddMaster} disabled={savingMaster || !newName.trim()} variant="contained">
-                        Simpan
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                </div>
+            </Modal>
         </>
     );
 }

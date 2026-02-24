@@ -7,6 +7,7 @@ import Login from './pages/LoginPage'
 import RequireAuth from './components/RequireAuth'
 import AppShell from './layouts/AppShell'
 import ProfilePage from './pages/ProfilePage'
+import MassImportPage from './pages/MassImportPage'
 
 export default function AppRoutes() {
     return (
@@ -20,6 +21,7 @@ export default function AppRoutes() {
                     <Route path="/" element={<DashboardPage />} />
                     <Route path="/data-inputan" element={<CalibrationListPage />} />
                     <Route path="/data-inventaris" element={<InventoryListPage />} />
+                    <Route path="/mass-import" element={<MassImportPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     {/* <Route path="/category-orders" element={<CategoryOrder />} /> */}
                 </Route>

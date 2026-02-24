@@ -1,15 +1,15 @@
 import { Outlet } from 'react-router'
 import Navbar from '../components/Navbar'
-import { Box, Toolbar } from '@mui/material'
 
 export default function AppShell() {
     return (
-        <>
+        <div className="min-h-screen bg-slate-50 transition-colors duration-300">
             <Navbar />
-            <Box sx={{ p: 3 }}>
-                <Toolbar />
-                <Outlet />
-            </Box>
-        </>
+            <main className="pt-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                <div className="py-6">
+                    <Outlet />
+                </div>
+            </main>
+        </div>
     )
 }
