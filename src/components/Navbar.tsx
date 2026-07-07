@@ -61,14 +61,14 @@ export default function Navbar() {
 
     return (
         <>
-            <nav className="fixed top-0 left-0 right-0 z-40 bg-blue-600 shadow-md">
+            <nav className="fixed top-0 left-0 right-0 z-40 bg-slate-900 border-b border-slate-800 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Mobile menu button */}
                         <div className="flex items-center sm:hidden">
                             <button
                                 onClick={() => setMobileOpen(!mobileOpen)}
-                                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-blue-700 focus:outline-none"
+                                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-slate-800 focus:outline-none"
                             >
                                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -85,8 +85,8 @@ export default function Navbar() {
                                     className={({ isActive }) => `
                                         flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all
                                         ${isActive
-                                            ? 'bg-blue-700 text-white shadow-inner scale-105'
-                                            : 'text-blue-100 hover:bg-blue-500 hover:text-white'}
+                                            ? 'bg-slate-800 text-white shadow-inner scale-105 border border-slate-700'
+                                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'}
                                     `}
                                 >
                                     {item.icon}
@@ -100,12 +100,12 @@ export default function Navbar() {
                             <div className="relative" ref={menuRef}>
                                 <button
                                     onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                                    className="flex text-sm bg-blue-800 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-600 focus:ring-white overflow-hidden"
+                                    className="flex text-sm bg-slate-950 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-white overflow-hidden"
                                 >
                                     {user?.photoURL ? (
                                         <img className="h-8 w-8 object-cover" src={user.photoURL} alt="" />
                                     ) : (
-                                        <div className="h-8 w-8 flex items-center justify-center bg-blue-700 text-white font-bold text-xs">
+                                        <div className="h-8 w-8 flex items-center justify-center bg-slate-800 text-slate-200 font-bold text-xs">
                                             {user?.displayName ? getInitials(user.displayName) : (
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -144,7 +144,7 @@ export default function Navbar() {
 
                 {/* Mobile Navigation Drawer */}
                 {mobileOpen && (
-                    <div className="sm:hidden bg-blue-700 border-t border-blue-500 animate-in slide-in-from-top duration-200">
+                    <div className="sm:hidden bg-slate-900 border-t border-slate-800 animate-in slide-in-from-top duration-200">
                         <div className="px-2 pt-2 pb-3 space-y-1">
                             {navItems.map((item) => (
                                 <NavLink
@@ -154,8 +154,8 @@ export default function Navbar() {
                                     className={({ isActive }) => `
                                         flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium
                                         ${isActive
-                                            ? 'bg-blue-800 text-white'
-                                            : 'text-blue-100 hover:bg-blue-600 hover:text-white'}
+                                            ? 'bg-slate-800 text-white'
+                                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'}
                                     `}
                                 >
                                     {item.icon}
