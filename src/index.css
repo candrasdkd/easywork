@@ -37,22 +37,203 @@ body {
   /* text-slate-900 */
 }
 
-/* Custom Global Cursor System */
-html, body {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 32 32'><path d='M4 4v18.3l4.8-4.8 3.5 8.1 2.4-1-3.5-8.1h6.3L4 4z' fill='%231e293b' stroke='%23ffffff' stroke-width='2.5' stroke-linejoin='round'/></svg>") 5 5, auto;
+/* ============================================
+   Custom Cursor System — Orange Theme
+   Hotspot tip: koordinat "x y" harus nempel di
+   ujung visual kursor (bukan tengah/asal tebak)
+   ============================================ */
+
+:root {
+  --cursor-fill: %23c2410c;
+  /* orange-700 */
+  --cursor-fill-active: %239a3412;
+  /* orange-800, buat active/pressed state */
+  --cursor-stroke: %23ffffff;
 }
 
-/* Custom Pointer Cursor for clickable elements */
-a, button, [role="button"], select, summary, input[type="submit"], input[type="button"], .cursor-pointer {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 32 32'><path d='M10 3a1.5 1.5 0 00-1.5 1.5v8.2L7.3 12c-.5-.3-1.1-.2-1.5.2l-.8.8c-.3.3-.3.8 0 1.1l5.5 5.5c1 1 2.3 1.5 3.7 1.5h4.1c2.4 0 4.4-1.8 4.7-4.2l.6-4.2c.2-1.3-.8-2.5-2.1-2.5h-.7V9.5A1.5 1.5 0 0019.3 8c-.2 0-.4.05-.6.13A1.5 1.5 0 0017 7.5c-.3 0-.6.1-.8.25A1.5 1.5 0 0014.5 6c-.2 0-.4.05-.6.13V4.5A1.5 1.5 0 0012.2 3H10z' fill='%231e293b' stroke='%23ffffff' stroke-width='2.5' stroke-linejoin='round'/></svg>") 11 3, pointer !important;
+/* ============================================
+   Custom Cursor System
+   Modern Orange Pointer
+   ============================================ */
+
+:root {
+  --cursor-orange: #c2410c;
+  --cursor-orange-dark: #9a3412;
 }
 
-/* Custom Active Cursor when clicking */
-a:active, button:active, [role="button"]:active, .cursor-pointer:active {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 32 32'><path d='M10 3a1.5 1.5 0 00-1.5 1.5v8.2L7.3 12c-.5-.3-1.1-.2-1.5.2l-.8.8c-.3.3-.3.8 0 1.1l5.5 5.5c1 1 2.3 1.5 3.7 1.5h4.1c2.4 0 4.4-1.8 4.7-4.2l.6-4.2c.2-1.3-.8-2.5-2.1-2.5h-.7V9.5A1.5 1.5 0 0019.3 8c-.2 0-.4.05-.6.13A1.5 1.5 0 0017 7.5c-.3 0-.6.1-.8.25A1.5 1.5 0 0014.5 6c-.2 0-.4.05-.6.13V4.5A1.5 1.5 0 0012.2 3H10z' fill='%23243b53' stroke='%23ffffff' stroke-width='2.5' stroke-linejoin='round'/></svg>") 11 3, pointer !important;
-}
+/* Nonaktifkan custom cursor di perangkat touchscreen */
+@media (hover: hover) and (pointer: fine) {
+  /* --------------------------------------------
+     DEFAULT — Rounded arrow
+     Hotspot tepat pada ujung panah: 3 2
+     -------------------------------------------- */
 
-/* Custom I-beam Text Cursor for inputs */
-input[type="text"], input[type="email"], input[type="search"], input[type="number"], input[type="password"], input[type="url"], textarea, [contenteditable="true"], .cursor-text {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 32 32'><path d='M11 6h10M16 6v20M11 26h10' fill='none' stroke='%23ffffff' stroke-width='4.5' stroke-linecap='round'/><path d='M11 6h10M16 6v20M11 26h10' fill='none' stroke='%231e293b' stroke-width='2.5' stroke-linecap='round'/></svg>") 18 18, text !important;
+  html,
+  body {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%23ffffff' stroke='%23ffffff' stroke-width='3.6' stroke-linejoin='round'/%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%23c2410c' stroke='%239a3412' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 3 2,
+      auto;
+  }
+
+  /* --------------------------------------------
+     POINTER — Arrow dengan lingkaran kecil
+     Lebih clean daripada cursor berbentuk ring besar
+     -------------------------------------------- */
+
+  a,
+  button,
+  [role="button"],
+  select,
+  summary,
+  label[for],
+  input[type="submit"],
+  input[type="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  .cursor-pointer {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='34' viewBox='0 0 30 34'%3E%3Ccircle cx='20.5' cy='22.5' r='7' fill='%23fff7ed' stroke='%23c2410c' stroke-width='2'/%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%23ffffff' stroke='%23ffffff' stroke-width='3.6' stroke-linejoin='round'/%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%23c2410c' stroke='%239a3412' stroke-width='1.4' stroke-linejoin='round'/%3E%3Ccircle cx='20.5' cy='22.5' r='2.2' fill='%23c2410c'/%3E%3C/svg%3E") 3 2,
+      pointer !important;
+  }
+
+  /* --------------------------------------------
+     ACTIVE — Cursor sedikit lebih kecil dan gelap
+     -------------------------------------------- */
+
+  a:active,
+  button:active,
+  [role="button"]:active,
+  .cursor-pointer:active {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' viewBox='0 0 28 32'%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%23ffffff' stroke='%23ffffff' stroke-width='3.6' stroke-linejoin='round'/%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%239a3412' stroke='%237c2d12' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 3 2,
+      pointer !important;
+  }
+
+  /* --------------------------------------------
+     TEXT
+     -------------------------------------------- */
+
+  input[type="text"],
+  input[type="email"],
+  input[type="search"],
+  input[type="number"],
+  input[type="password"],
+  input[type="url"],
+  input[type="tel"],
+  textarea,
+  [contenteditable="true"],
+  .cursor-text {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='28' viewBox='0 0 18 28'%3E%3Cpath d='M4 3h10M9 3v22M4 25h10' fill='none' stroke='%23ffffff' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M4 3h10M9 3v22M4 25h10' fill='none' stroke='%23c2410c' stroke-width='2.3' stroke-linecap='round'/%3E%3C/svg%3E") 9 14,
+      text !important;
+  }
+
+  /* --------------------------------------------
+     GRAB
+     -------------------------------------------- */
+
+  [draggable="true"],
+  .cursor-grab {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect x='3' y='3' width='22' height='22' rx='8' fill='%23fff7ed' stroke='%23c2410c' stroke-width='2'/%3E%3Ccircle cx='10' cy='10' r='1.7' fill='%23c2410c'/%3E%3Ccircle cx='18' cy='10' r='1.7' fill='%23c2410c'/%3E%3Ccircle cx='10' cy='18' r='1.7' fill='%23c2410c'/%3E%3Ccircle cx='18' cy='18' r='1.7' fill='%23c2410c'/%3E%3C/svg%3E") 14 14,
+      grab !important;
+  }
+
+  [draggable="true"]:active,
+  .cursor-grabbing,
+  .dragging {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 28 28'%3E%3Crect x='3' y='3' width='22' height='22' rx='8' fill='%23c2410c' stroke='%239a3412' stroke-width='2'/%3E%3Ccircle cx='10' cy='10' r='1.7' fill='%23ffffff'/%3E%3Ccircle cx='18' cy='10' r='1.7' fill='%23ffffff'/%3E%3Ccircle cx='10' cy='18' r='1.7' fill='%23ffffff'/%3E%3Ccircle cx='18' cy='18' r='1.7' fill='%23ffffff'/%3E%3C/svg%3E") 13 13,
+      grabbing !important;
+  }
+
+  /* --------------------------------------------
+     MOVE
+     -------------------------------------------- */
+
+  .cursor-move {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M14 2l4.5 5H16v5h5V9.5l5 4.5-5 4.5V16h-5v5h2.5L14 26l-4.5-5H12v-5H7v2.5L2 14l5-4.5V12h5V7H9.5z' fill='%23ffffff' stroke='%23ffffff' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M14 2l4.5 5H16v5h5V9.5l5 4.5-5 4.5V16h-5v5h2.5L14 26l-4.5-5H12v-5H7v2.5L2 14l5-4.5V12h5V7H9.5z' fill='%23c2410c'/%3E%3C/svg%3E") 14 14,
+      move !important;
+  }
+
+  /* --------------------------------------------
+     RESIZE
+     Menggunakan cursor native agar presisi dan familiar
+     -------------------------------------------- */
+
+  .cursor-resize-ns {
+    cursor: ns-resize !important;
+  }
+
+  .cursor-resize-ew {
+    cursor: ew-resize !important;
+  }
+
+  .cursor-resize-nesw {
+    cursor: nesw-resize !important;
+  }
+
+  .cursor-resize-nwse {
+    cursor: nwse-resize !important;
+  }
+
+  /* --------------------------------------------
+     DISABLED / NOT ALLOWED
+     -------------------------------------------- */
+
+  [disabled],
+  [aria-disabled="true"],
+  .cursor-not-allowed {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='10' fill='%23fff7ed' stroke='%23c2410c' stroke-width='2.5'/%3E%3Cpath d='M7 21 21 7' stroke='%23c2410c' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 14 14,
+      not-allowed !important;
+  }
+
+  /* Hindari disabled element terkena style pointer */
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='10' fill='%23fff7ed' stroke='%23c2410c' stroke-width='2.5'/%3E%3Cpath d='M7 21 21 7' stroke='%23c2410c' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 14 14,
+      not-allowed !important;
+  }
+
+  /* --------------------------------------------
+     COPY
+     -------------------------------------------- */
+
+  .cursor-copy {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect x='4' y='7' width='15' height='16' rx='4' fill='%23ffffff' stroke='%23c2410c' stroke-width='2'/%3E%3Crect x='9' y='3' width='15' height='16' rx='4' fill='%23fff7ed' stroke='%23c2410c' stroke-width='2'/%3E%3Cpath d='M16.5 7v8M12.5 11h8' stroke='%23c2410c' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 14 14,
+      copy !important;
+  }
+
+  /* --------------------------------------------
+     WAIT
+     -------------------------------------------- */
+
+  .cursor-wait,
+  [aria-busy="true"] {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='9' fill='none' stroke='%23fed7aa' stroke-width='3'/%3E%3Cpath d='M14 5a9 9 0 0 1 8.7 6.7' fill='none' stroke='%23c2410c' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='14' cy='14' r='2' fill='%23c2410c'/%3E%3C/svg%3E") 14 14,
+      wait !important;
+  }
+
+  /* --------------------------------------------
+     ZOOM
+     -------------------------------------------- */
+
+  .cursor-zoom-in {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='11.5' cy='11.5' r='7.5' fill='%23ffffff' stroke='%23c2410c' stroke-width='2.5'/%3E%3Cpath d='M17 17l7 7M11.5 8v7M8 11.5h7' fill='none' stroke='%23c2410c' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") 11 11,
+      zoom-in !important;
+  }
+
+  .cursor-zoom-out {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='11.5' cy='11.5' r='7.5' fill='%23ffffff' stroke='%23c2410c' stroke-width='2.5'/%3E%3Cpath d='M17 17l7 7M8 11.5h7' fill='none' stroke='%23c2410c' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") 11 11,
+      zoom-out !important;
+  }
 }
