@@ -8,6 +8,7 @@ import RequireAuth from './components/RequireAuth'
 import AppShell from './layouts/AppShell'
 import ProfilePage from './pages/ProfilePage'
 import MassImportPage from './pages/MassImportPage'
+import PurchaseOrderPdfPage from './pages/PurchaseOrderPdfPage'
 import EquipmentCheckPage from './pages/EquipmentCheckPage'
 import ReferenceToolsPage from './pages/ReferenceToolsPage'
 
@@ -24,6 +25,7 @@ export default function AppRoutes() {
                     <Route path="/data-inputan" element={<CalibrationListPage />} />
                     <Route path="/data-inventaris" element={<InventoryListPage />} />
                     <Route path="/mass-import" element={<MassImportPage />} />
+                    <Route path="/ekstrak-pesanan-pdf" element={<PurchaseOrderPdfPage />} />
                     <Route path="/cek-alat" element={<EquipmentCheckPage />} />
                     <Route path="/referensi-alat" element={<ReferenceToolsPage />} />
                     <Route path="/profile" element={<ProfilePage />} />

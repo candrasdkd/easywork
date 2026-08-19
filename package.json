@@ -23,6 +23,7 @@
     "dayjs": "^1.11.13",
     "file-saver": "^2.0.5",
     "firebase": "^12.1.0",
+    "pdfjs-dist": "^6.2.108",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router": "^7.7.1",
