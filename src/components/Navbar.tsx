@@ -6,13 +6,41 @@ import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 
 const navItems = [
-    { label: 'Dashboard', path: '/', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
-    { label: 'Data Kalibrasi', path: '/data-inputan', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
-    { label: 'SPH', path: '/mass-import', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg> },
-    { label: 'Pesanan PDF', path: '/ekstrak-pesanan-pdf', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M8 13h8M8 17h5" /></svg> },
-    { label: 'Cek Alat', path: '/cek-alat', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-    { label: 'Master Sertifikat', path: '/isi-master-sertifikat', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 4v15a2 2 0 01-2 2z" /></svg> },
-    { label: 'Referensi', path: '/referensi-alat', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
+    {
+        label: 'Dashboard',
+        path: '/',
+        icon: <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
+    },
+    {
+        label: 'Data Kalibrasi',
+        path: '/data-inputan',
+        icon: <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+    },
+    {
+        label: 'SPH',
+        path: '/mass-import',
+        icon: <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>,
+    },
+    {
+        label: 'Pesanan PDF',
+        path: '/ekstrak-pesanan-pdf',
+        icon: <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M8 13h8M8 17h5" /></svg>,
+    },
+    {
+        label: 'Cek Alat',
+        path: '/cek-alat',
+        icon: <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    },
+    {
+        label: 'Master Sertifikat',
+        path: '/isi-master-sertifikat',
+        icon: <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 4v15a2 2 0 01-2 2z" /></svg>,
+    },
+    {
+        label: 'Referensi',
+        path: '/referensi-alat',
+        icon: <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
+    },
 ];
 
 function getInitials(name?: string | null) {
@@ -23,7 +51,12 @@ function getInitials(name?: string | null) {
     return (first + last).toUpperCase();
 }
 
-export default function Navbar() {
+interface NavbarProps {
+    desktopHidden: boolean;
+    onToggleDesktop: () => void;
+}
+
+export default function Navbar({ desktopHidden, onToggleDesktop }: NavbarProps) {
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [openConfirm, setOpenConfirm] = React.useState(false);
     const [user, setUser] = React.useState<User | null>(auth.currentUser ?? null);
@@ -32,8 +65,8 @@ export default function Navbar() {
     const menuRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
-        const unsub = onAuthStateChanged(auth, (u) => setUser(u));
-        return () => unsub();
+        const unsubscribe = onAuthStateChanged(auth, setUser);
+        return unsubscribe;
     }, []);
 
     React.useEffect(() => {
@@ -48,6 +81,7 @@ export default function Navbar() {
 
     const handleGoProfile = () => {
         setAccountMenuOpen(false);
+        setMobileOpen(false);
         navigate('/profile');
     };
 
@@ -56,130 +90,176 @@ export default function Navbar() {
             await signOut(auth);
             setAccountMenuOpen(false);
             setOpenConfirm(false);
+            setMobileOpen(false);
             navigate('/login', { replace: true });
-        } catch (e) {
-            console.error('Logout failed:', e);
+        } catch (error) {
+            console.error('Logout failed:', error);
         }
     };
 
     return (
         <>
-            <nav className="fixed top-0 left-0 right-0 z-40 bg-slate-900 border-b border-slate-800 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Mobile menu button */}
-                        <div className="flex items-center lg:hidden">
-                            <button
-                                onClick={() => setMobileOpen(!mobileOpen)}
-                                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-slate-800 focus:outline-none lg:hidden"
-                            >
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                            </button>
-                        </div>
+            <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-950 px-4 text-white shadow-sm lg:hidden">
+                <button
+                    type="button"
+                    onClick={() => setMobileOpen(true)}
+                    aria-label="Buka menu navigasi"
+                    aria-expanded={mobileOpen}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-200 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                >
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 text-lg font-black text-white">E</span>
+                    <span className="text-lg font-bold tracking-tight">EasyWork</span>
+                </div>
+                <div className="h-10 w-10" aria-hidden="true" />
+            </header>
 
-                        {/* Desktop Navigation */}
-                        <div className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto lg:flex lg:mx-2">
-                            {navItems.map((item) => (
-                                <NavLink
-                                    key={item.label}
-                                    to={item.path}
-                                    className={({ isActive }) => `
-                                        flex shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-all xl:gap-2 xl:px-2.5 xl:text-sm
-                                        ${isActive
-                                            ? 'bg-slate-800 text-white shadow-inner scale-105 border border-slate-700'
-                                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'}
-                                    `}
-                                >
-                                    {item.icon}
-                                    {item.label}
-                                </NavLink>
-                            ))}
-                        </div>
+            {desktopHidden && (
+                <header className="fixed inset-x-0 top-0 z-40 hidden h-16 items-center gap-3 border-b border-slate-200 bg-white/95 px-5 text-slate-900 shadow-sm backdrop-blur lg:flex">
+                    <button
+                        type="button"
+                        onClick={onToggleDesktop}
+                        aria-label="Tampilkan sidebar"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 text-lg font-black text-white">E</span>
+                    <span className="text-lg font-bold tracking-tight">EasyWork</span>
+                </header>
+            )}
 
-                        {/* Account Dropdown */}
-                        <div className="flex items-center gap-2">
-                            <div className="relative" ref={menuRef}>
-                                <button
-                                    onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                                    className="flex text-sm bg-slate-950 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-white overflow-hidden"
-                                >
-                                    {user?.photoURL ? (
-                                        <img className="h-8 w-8 object-cover" src={user.photoURL} alt="" />
-                                    ) : (
-                                        <div className="h-8 w-8 flex items-center justify-center bg-slate-800 text-slate-200 font-bold text-xs">
-                                            {user?.displayName ? getInitials(user.displayName) : (
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    )}
-                                </button>
+            {mobileOpen && (
+                <button
+                    type="button"
+                    aria-label="Tutup menu navigasi"
+                    onClick={() => setMobileOpen(false)}
+                    className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm lg:hidden"
+                />
+            )}
 
-                                {accountMenuOpen && (
-                                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 animate-in fade-in zoom-in duration-100">
-                                        {user && (
-                                            <div className="px-4 py-2 border-b border-gray-100">
-                                                <p className="text-sm font-semibold truncate text-gray-900">{user.displayName || 'Pengguna'}</p>
-                                                <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                                            </div>
-                                        )}
-                                        <button
-                                            onClick={handleGoProfile}
-                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            Profil
-                                        </button>
-                                        <button
-                                            onClick={() => setOpenConfirm(true)}
-                                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                                        >
-                                            Logout
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+            <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-800 bg-slate-950 text-white shadow-xl transition-transform duration-200 ease-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} ${desktopHidden ? 'lg:-translate-x-full' : 'lg:translate-x-0'}`}>
+                <div className="flex h-16 shrink-0 items-center gap-3 border-b border-slate-800 px-5">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 text-xl font-black text-white shadow-lg shadow-indigo-500/20">E</span>
+                    <div>
+                        <p className="text-lg font-bold tracking-tight">EasyWork</p>
+                        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">Workspace</p>
+                    </div>
+                    <div className="ml-auto flex items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={onToggleDesktop}
+                            aria-label="Sembunyikan sidebar"
+                            className="hidden rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 lg:inline-flex"
+                        >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10M4 18h16M18 10l2 2-2 2" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMobileOpen(false)}
+                            aria-label="Tutup menu navigasi"
+                            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 lg:hidden"
+                        >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
-                {/* Mobile Navigation Drawer */}
-                {mobileOpen && (
-                    <div className="lg:hidden bg-slate-900 border-t border-slate-800 animate-in slide-in-from-top duration-200">
-                        <div className="px-2 pt-2 pb-3 space-y-1">
-                            {navItems.map((item) => (
-                                <NavLink
-                                    key={item.label}
-                                    to={item.path}
-                                    onClick={() => setMobileOpen(false)}
-                                    className={({ isActive }) => `
-                                        flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium
-                                        ${isActive
-                                            ? 'bg-slate-800 text-white'
-                                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'}
-                                    `}
-                                >
-                                    {item.icon}
-                                    {item.label}
-                                </NavLink>
-                            ))}
-                        </div>
+                <nav aria-label="Navigasi utama" className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
+                    <p className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Menu</p>
+                    <div className="space-y-1">
+                        {navItems.map((item) => (
+                            <NavLink
+                                key={item.path}
+                                to={item.path}
+                                end={item.path === '/'}
+                                onClick={() => setMobileOpen(false)}
+                                className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isActive
+                                    ? 'bg-indigo-500/15 text-indigo-200 ring-1 ring-inset ring-indigo-400/20'
+                                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
+                            >
+                                {item.icon}
+                                <span>{item.label}</span>
+                            </NavLink>
+                        ))}
                     </div>
-                )}
-            </nav>
+                </nav>
+
+                <div className="shrink-0 border-t border-slate-800 p-3">
+                    <div className="relative" ref={menuRef}>
+                        {accountMenuOpen && (
+                            <div className="absolute bottom-full left-0 mb-2 w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-900 py-1 shadow-xl">
+                                {user && (
+                                    <div className="border-b border-slate-800 px-4 py-3">
+                                        <p className="truncate text-sm font-semibold text-white">{user.displayName || 'Pengguna'}</p>
+                                        <p className="truncate text-xs text-slate-400">{user.email}</p>
+                                    </div>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={handleGoProfile}
+                                    className="block w-full px-4 py-2.5 text-left text-sm text-slate-200 transition hover:bg-slate-800"
+                                >
+                                    Profil
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setAccountMenuOpen(false);
+                                        setOpenConfirm(true);
+                                    }}
+                                    className="block w-full px-4 py-2.5 text-left text-sm text-rose-300 transition hover:bg-slate-800"
+                                >
+                                    Logout
+                                </button>
+                            </div>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={() => setAccountMenuOpen((open) => !open)}
+                            aria-expanded={accountMenuOpen}
+                            className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        >
+                            {user?.photoURL ? (
+                                <img className="h-9 w-9 shrink-0 rounded-full object-cover" src={user.photoURL} alt="" />
+                            ) : (
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-bold text-slate-100">
+                                    {getInitials(user?.displayName)}
+                                </span>
+                            )}
+                            <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-semibold text-slate-100">{user?.displayName || 'Akun'}</span>
+                                <span className="block truncate text-xs text-slate-400">{user?.email || 'Pengaturan akun'}</span>
+                            </span>
+                            <svg className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${accountMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </aside>
 
             <Modal
                 open={openConfirm}
                 onClose={() => setOpenConfirm(false)}
                 title="Konfirmasi Logout"
-                footer={
+                footer={(
                     <>
                         <Button variant="outline" onClick={() => setOpenConfirm(false)}>Batal</Button>
                         <Button variant="danger" onClick={handleLogout}>Ya, Logout</Button>
                     </>
-                }
+                )}
             >
                 <p>Apakah Anda yakin ingin keluar dari aplikasi?</p>
             </Modal>
