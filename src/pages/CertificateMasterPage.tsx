@@ -228,7 +228,7 @@ export default function CertificateMasterPage() {
                                     type="file"
                                     multiple
                                     accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                                    className="block w-full text-sm font-normal text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-indigo-700 dark:text-gray-300"
+                                    className="block w-full text-sm font-normal text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-teal-700 dark:text-gray-300"
                                     onChange={(event) => {
                                         handleSourceFileSelection(Array.from(event.target.files ?? []));
                                         event.target.value = '';
@@ -236,13 +236,13 @@ export default function CertificateMasterPage() {
                                 />
                             </label>
                             <label className="block space-y-2 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                                Tambah satu folder tanggal
+                                Tambah lewat folder
                                 <input
                                     ref={(input) => input?.setAttribute('webkitdirectory', '')}
                                     type="file"
                                     multiple
                                     accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                                    className="block w-full text-sm font-normal text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-indigo-700 dark:text-gray-300"
+                                    className="block w-full text-sm font-normal text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-teal-700 dark:text-gray-300"
                                     onChange={(event) => {
                                         handleSourceFileSelection(Array.from(event.target.files ?? []));
                                         event.target.value = '';

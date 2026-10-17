@@ -81,76 +81,54 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-white font-sans text-slate-900">
+        <div className="flex min-h-screen bg-[#f4f7f8] text-slate-900">
             {/* Left Decorative / Brand Panel (Hidden on Mobile) */}
-            <div className="relative hidden w-1/2 lg:flex flex-col justify-between p-12 overflow-hidden bg-slate-900">
-                {/* Background Details */}
-                <div className="absolute inset-0 z-0">
-                    {/* Glowing Orbs */}
-                    <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-500/30 blur-[100px]" />
-                    <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-cyan-400/20 blur-[120px]" />
-
-                    {/* Dark overlay with pattern */}
-                    <div
-                        className="absolute inset-0 opacity-20"
-                        style={{
-                            backgroundImage: "radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.2) 1px, transparent 0)",
-                            backgroundSize: "32px 32px"
-                        }}
-                    />
-                </div>
+            <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-[#173a3c] p-12 lg:flex xl:p-16">
+                <div className="pointer-events-none absolute -right-36 -top-32 h-[34rem] w-[34rem] rounded-full border border-white/10" />
+                <div className="pointer-events-none absolute -right-20 -top-16 h-[26rem] w-[26rem] rounded-full border border-white/10" />
 
                 {/* Brand Content */}
                 <div className="relative z-10 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 p-0.5 shadow-lg shadow-indigo-500/30">
-                        <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-                            <span className="text-xl font-black bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent">E</span>
-                        </div>
-                    </div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-400 text-xl font-black text-[#173a3c]">E</div>
                     <span className="text-2xl font-bold tracking-tight text-white drop-shadow-sm">EasyWork</span>
                 </div>
 
                 <div className="relative z-10 max-w-lg mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                    <h1 className="text-5xl font-black text-white leading-[1.15] mb-6">
+                    <h1 className="mb-6 text-4xl font-bold leading-[1.15] text-white xl:text-5xl">
                         Solusi Pintar <br />
-                        <span className="bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+                        <span className="text-teal-300">
                             Manajemen Anda
                         </span>
                     </h1>
-                    <p className="text-lg text-slate-400 leading-relaxed font-medium">
+                    <p className="max-w-md text-base leading-relaxed text-teal-50/70 xl:text-lg">
                         Platform andalan untuk memantau dan mengelola data kalibrasi dengan cepat, presisi, dan aman.
                     </p>
 
-                    {/* UI Illustration representation (Decorative Mockup elements) */}
-                    <div className="mt-12 flex gap-4 opacity-80 mix-blend-plus-lighter">
-                        <div className="h-2 w-12 bg-indigo-500/50 rounded-full" />
-                        <div className="h-2 w-24 bg-cyan-400/50 rounded-full" />
-                        <div className="h-2 w-16 bg-slate-600/50 rounded-full" />
+                    <div className="mt-9 grid max-w-md grid-cols-3 gap-3">
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3"><p className="text-xs text-teal-50/60">Kelola</p><p className="mt-1 text-sm font-semibold text-white">Kalibrasi</p></div>
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3"><p className="text-xs text-teal-50/60">Lengkapi</p><p className="mt-1 text-sm font-semibold text-white">Sertifikat</p></div>
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3"><p className="text-xs text-teal-50/60">Rekap</p><p className="mt-1 text-sm font-semibold text-white">Peralatan</p></div>
                     </div>
                 </div>
 
                 {/* Footer on left side */}
-                <div className="relative z-10 text-sm font-medium text-slate-500">
-                    &copy; {new Date().getFullYear()} EasyWork. All rights reserved.
+                <div className="relative z-10 text-sm text-teal-50/50">
+                    &copy; {new Date().getFullYear()} EasyWork
                 </div>
             </div>
 
             {/* Right Form Panel */}
-            <div className="flex w-full lg:w-1/2 flex-col justify-center items-center p-6 sm:p-12 xl:p-24 relative bg-white">
+            <div className="relative flex w-full flex-col items-center justify-center bg-[#f4f7f8] p-5 sm:p-10 lg:w-1/2 xl:p-16">
 
                 {/* Mobile Header */}
-                <div className="absolute top-8 left-8 flex items-center gap-3 lg:hidden">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 p-0.5 shadow-md shadow-indigo-500/20">
-                        <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-                            <span className="text-lg font-black text-white">E</span>
-                        </div>
-                    </div>
+                <div className="absolute left-6 top-6 flex items-center gap-3 lg:hidden">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-700 text-lg font-black text-white">E</div>
                     <span className="font-bold tracking-tight text-slate-800 text-xl">EasyWork</span>
                 </div>
 
-                <div className="w-full max-w-sm mt-12 lg:mt-0 animate-in fade-in zoom-in-95 duration-500">
+                <div className="mt-16 w-full max-w-md rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_18px_60px_rgba(29,64,67,0.08)] animate-in fade-in zoom-in-95 duration-500 sm:mt-0 sm:p-9">
                     <div className="mb-10 text-center lg:text-left">
-                        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-2">
+                        <h2 className="mb-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                             {mode === 'login' ? 'Selamat Datang' : 'Mulai Sekarang'}
                         </h2>
                         <p className="text-slate-500">
@@ -190,7 +168,7 @@ export default function Login() {
                                     value={displayName}
                                     onChange={(e) => setDisplayName(e.target.value)}
                                     autoComplete="name"
-                                    className="block w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                    className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-600/15"
                                     placeholder="John Doe"
                                 />
                             </div>
@@ -208,7 +186,7 @@ export default function Login() {
                                 autoComplete="email"
                                 className={`block w-full px-4 py-3.5 bg-slate-50 border rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 outline-none transition-all ${!!email && !!emailErr
                                     ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500'
-                                    : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
+                                    : 'border-slate-200 focus:ring-teal-600/15 focus:border-teal-600'
                                     }`}
                                 placeholder="nama@perusahaan.com"
                             />
@@ -227,7 +205,7 @@ export default function Login() {
                                         type="button"
                                         onClick={handleReset}
                                         disabled={loading}
-                                        className="text-sm font-medium text-indigo-600 hover:text-indigo-500 disabled:opacity-50"
+                                        className="text-sm font-medium text-teal-600 hover:text-teal-500 disabled:opacity-50"
                                     >
                                         Lupa Sandi?
                                     </button>
@@ -241,9 +219,9 @@ export default function Login() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                                    className={`block w-full px-4 py-3.5 pr-12 bg-slate-50 border rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 outline-none transition-all ${!!password && !!pwdErr
+                                        className={`block w-full rounded-xl border bg-slate-50 px-4 py-3.5 pr-12 text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:bg-white focus:ring-2 ${!!password && !!pwdErr
                                         ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500'
-                                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
+                                        : 'border-slate-200 focus:ring-teal-600/15 focus:border-teal-600'
                                         }`}
                                     placeholder="••••••••"
                                 />
@@ -265,7 +243,7 @@ export default function Login() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full relative group mt-8 overflow-hidden rounded-xl bg-slate-900 py-4 px-4 font-semibold text-white shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-[1px] hover:shadow-xl hover:shadow-slate-900/30 active:translate-y-0 active:shadow-md disabled:pointer-events-none disabled:opacity-70"
+                            className="group relative mt-8 w-full overflow-hidden rounded-xl bg-teal-800 px-4 py-4 font-semibold text-white shadow-sm transition-all hover:bg-teal-900 disabled:pointer-events-none disabled:opacity-70"
                         >
                             <span className="relative z-10 flex items-center justify-center gap-2">
                                 {loading && (
@@ -276,7 +254,6 @@ export default function Login() {
                                 )}
                                 {loading ? 'Memproses...' : (mode === 'login' ? 'Masuk ke Dashboard' : 'Buat Akun')}
                             </span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-cyan-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                         </button>
                     </form>
 
@@ -291,7 +268,7 @@ export default function Login() {
                                         setError(null)
                                         setSuccess(null)
                                     }}
-                                    className="text-indigo-600 hover:text-indigo-500 font-semibold"
+                                    className="text-teal-600 hover:text-teal-500 font-semibold"
                                 >
                                     Daftar Sekarang
                                 </button>
@@ -305,7 +282,7 @@ export default function Login() {
                                         setError(null)
                                         setSuccess(null)
                                     }}
-                                    className="text-indigo-600 hover:text-indigo-500 font-semibold"
+                                    className="text-teal-600 hover:text-teal-500 font-semibold"
                                 >
                                     Masuk Disini
                                 </button>

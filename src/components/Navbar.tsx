@@ -99,38 +99,38 @@ export default function Navbar({ desktopHidden, onToggleDesktop }: NavbarProps) 
 
     return (
         <>
-            <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-950 px-4 text-white shadow-sm lg:hidden">
+            <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-white/10 bg-[#173a3c] px-4 text-white shadow-sm lg:hidden">
                 <button
                     type="button"
                     onClick={() => setMobileOpen(true)}
                     aria-label="Buka menu navigasi"
                     aria-expanded={mobileOpen}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-200 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-200 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-300"
                 >
                     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
                 <div className="flex items-center gap-2.5">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 text-lg font-black text-white">E</span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-400 text-lg font-black text-[#173a3c]">E</span>
                     <span className="text-lg font-bold tracking-tight">EasyWork</span>
                 </div>
                 <div className="h-10 w-10" aria-hidden="true" />
             </header>
 
             {desktopHidden && (
-                <header className="fixed inset-x-0 top-0 z-40 hidden h-16 items-center gap-3 border-b border-slate-200 bg-white/95 px-5 text-slate-900 shadow-sm backdrop-blur lg:flex">
+                <header className="fixed inset-x-0 top-0 z-40 hidden h-16 items-center gap-3 border-b border-slate-200/80 bg-white/90 px-5 text-slate-900 shadow-sm backdrop-blur lg:flex">
                     <button
                         type="button"
                         onClick={onToggleDesktop}
                         aria-label="Tampilkan sidebar"
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-600"
                     >
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 text-lg font-black text-white">E</span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-700 text-lg font-black text-white">E</span>
                     <span className="text-lg font-bold tracking-tight">EasyWork</span>
                 </header>
             )}
@@ -144,9 +144,9 @@ export default function Navbar({ desktopHidden, onToggleDesktop }: NavbarProps) 
                 />
             )}
 
-            <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-800 bg-slate-950 text-white shadow-xl transition-transform duration-200 ease-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} ${desktopHidden ? 'lg:-translate-x-full' : 'lg:translate-x-0'}`}>
-                <div className="flex h-16 shrink-0 items-center gap-3 border-b border-slate-800 px-5">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 text-xl font-black text-white shadow-lg shadow-indigo-500/20">E</span>
+            <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/10 bg-[#173a3c] text-white shadow-xl transition-transform duration-200 ease-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} ${desktopHidden ? 'lg:-translate-x-full' : 'lg:translate-x-0'}`}>
+                <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-5">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-400 text-xl font-black text-[#173a3c]">E</span>
                     <div>
                         <p className="text-lg font-bold tracking-tight">EasyWork</p>
                         <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">Workspace</p>
@@ -156,7 +156,7 @@ export default function Navbar({ desktopHidden, onToggleDesktop }: NavbarProps) 
                             type="button"
                             onClick={onToggleDesktop}
                             aria-label="Sembunyikan sidebar"
-                            className="hidden rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 lg:inline-flex"
+                            className="hidden rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-teal-300 lg:inline-flex"
                         >
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10M4 18h16M18 10l2 2-2 2" />
@@ -166,7 +166,7 @@ export default function Navbar({ desktopHidden, onToggleDesktop }: NavbarProps) 
                             type="button"
                             onClick={() => setMobileOpen(false)}
                             aria-label="Tutup menu navigasi"
-                            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 lg:hidden"
+                            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-teal-300 lg:hidden"
                         >
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -185,7 +185,7 @@ export default function Navbar({ desktopHidden, onToggleDesktop }: NavbarProps) 
                                 end={item.path === '/'}
                                 onClick={() => setMobileOpen(false)}
                                 className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isActive
-                                    ? 'bg-indigo-500/15 text-indigo-200 ring-1 ring-inset ring-indigo-400/20'
+                                ? 'bg-teal-300/15 text-teal-100 ring-1 ring-inset ring-teal-200/20'
                                     : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
                             >
                                 {item.icon}
@@ -195,7 +195,7 @@ export default function Navbar({ desktopHidden, onToggleDesktop }: NavbarProps) 
                     </div>
                 </nav>
 
-                <div className="shrink-0 border-t border-slate-800 p-3">
+                <div className="shrink-0 border-t border-white/10 p-3">
                     <div className="relative" ref={menuRef}>
                         {accountMenuOpen && (
                             <div className="absolute bottom-full left-0 mb-2 w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-900 py-1 shadow-xl">
@@ -229,7 +229,7 @@ export default function Navbar({ desktopHidden, onToggleDesktop }: NavbarProps) 
                             type="button"
                             onClick={() => setAccountMenuOpen((open) => !open)}
                             aria-expanded={accountMenuOpen}
-                            className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-300"
                         >
                             {user?.photoURL ? (
                                 <img className="h-9 w-9 shrink-0 rounded-full object-cover" src={user.photoURL} alt="" />

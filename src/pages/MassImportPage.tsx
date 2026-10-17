@@ -320,9 +320,7 @@ export default function SphPage() {
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                 {/* Left Column: Input */}
                 <div className={`xl:col-span-4 flex flex-col gap-6 ${isFullscreen ? 'hidden xl:hidden' : ''}`}>
-                    <div className="bg-white rounded-3xl shadow-sm border border-gray-200/60 p-6 flex flex-col h-full relative overflow-hidden transition-all duration-300 hover:shadow-md">
-                        {/* decorative gradient blob */}
-                        <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-blue-50/50 blur-2xl pointer-events-none"></div>
+                    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(20,45,52,0.04),0_8px_24px_rgba(20,45,52,0.035)] sm:p-6">
 
                         <div className="flex items-start justify-between mb-6 relative z-10">
                             <div>
@@ -399,7 +397,7 @@ export default function SphPage() {
                 {/* Right Column: Preview & Action */}
                 <div className={`${isFullscreen ? 'xl:col-span-12' : 'xl:col-span-8'} flex flex-col gap-6`}>
                     {sphItems.length === 0 ? (
-                        <div className="bg-white/40 border-2 border-dashed border-gray-200 rounded-3xl p-12 flex flex-col items-center justify-center text-center h-full min-h-[400px] xl:min-h-[600px]">
+                        <div className="flex h-full min-h-[400px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white/70 p-8 text-center xl:min-h-[600px]">
                             <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center mb-6">
                                 <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -411,7 +409,7 @@ export default function SphPage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-3xl shadow-sm border border-gray-200/60 flex flex-col h-full animate-in fade-in slide-in-from-bottom-8 duration-500 overflow-hidden relative">
+                        <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(20,45,52,0.04),0_8px_24px_rgba(20,45,52,0.035)] animate-in fade-in slide-in-from-bottom-8 duration-500">
                             {/* Header Section */}
                             <div className="p-6 sm:p-8 border-b border-gray-100 bg-white relative z-10">
                                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
@@ -481,7 +479,7 @@ export default function SphPage() {
                                     {/* Action Button */}
                                     <Button
                                         variant="primary"
-                                        className="shrink-0 bg-gray-900 hover:bg-black text-white border-0 shadow-xl shadow-gray-900/20 rounded-xl px-6 py-2.5 font-medium transition-all active:scale-95 flex items-center gap-2"
+                                        className="flex shrink-0 items-center gap-2 rounded-xl border-0 bg-teal-800 px-5 py-2.5 font-medium text-white shadow-sm transition-all hover:bg-teal-900 active:scale-95"
                                         onClick={handleExportExcel}
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

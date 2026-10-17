@@ -44,8 +44,8 @@ export const Modal = ({ open, onClose, title, children, footer, maxWidth = 'md' 
             {/* Modal Panel */}
             <div className={`
                 relative w-full ${maxWidthClasses[maxWidth]} 
-                bg-white dark:bg-slate-900 
-                rounded-2xl shadow-2xl 
+                border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(12,31,36,0.24)] dark:border-slate-800 dark:bg-slate-900
+                rounded-2xl
                 flex flex-col max-h-[90vh] 
                 animate-in fade-in zoom-in duration-200
             `}>

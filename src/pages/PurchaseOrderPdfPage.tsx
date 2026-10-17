@@ -260,7 +260,7 @@ export default function PurchaseOrderPdfPage() {
     }, [activeTab, products, services]);
 
     const pageIcon = (
-        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600">
+        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-600">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                     strokeLinecap="round"
@@ -296,7 +296,7 @@ export default function PurchaseOrderPdfPage() {
                     if (droppedFile) void handleFile(droppedFile);
                 }}
                 className={`rounded-3xl border-2 transition-all duration-200 bg-white p-6 sm:p-8 shadow-sm ${
-                    isDragging ? 'border-indigo-500 bg-indigo-50/40 ring-4 ring-indigo-500/10' : 'border-indigo-100'
+                    isDragging ? 'border-teal-500 bg-teal-50/40 ring-4 ring-teal-500/10' : 'border-teal-100'
                 }`}
             >
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -307,7 +307,7 @@ export default function PurchaseOrderPdfPage() {
                         </p>
                         {pdfMeta.orderNumber && (
                             <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                                <span className="rounded-md bg-indigo-50 px-2.5 py-1 font-semibold text-indigo-700">
+                                <span className="rounded-md bg-teal-50 px-2.5 py-1 font-semibold text-teal-700">
                                     No. SP: #{pdfMeta.orderNumber}
                                 </span>
                                 {pdfMeta.orderDate && (
@@ -318,7 +318,7 @@ export default function PurchaseOrderPdfPage() {
                             </div>
                         )}
                     </div>
-                    <label className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-indigo-600 px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-600/30 active:scale-[0.98]">
+                    <label className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-teal-600 px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-teal-600/20 transition-all hover:bg-teal-700 hover:shadow-lg hover:shadow-teal-600/30 active:scale-[0.98]">
                         <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
@@ -336,9 +336,9 @@ export default function PurchaseOrderPdfPage() {
                 </div>
 
                 {isExtracting && (
-                    <div className="mt-6 rounded-2xl bg-indigo-50 p-4 text-sm text-indigo-800">
+                    <div className="mt-6 rounded-2xl bg-teal-50 p-4 text-sm text-teal-800">
                         <div className="flex items-center gap-3 font-semibold">
-                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-200 border-t-teal-600" />
                             Membaca dan membedah isi PDF
                             {progress ? ` - Halaman ${progress.current} dari ${progress.total}` : '...'}
                         </div>
@@ -348,7 +348,7 @@ export default function PurchaseOrderPdfPage() {
                 {fileName && !isExtracting && (
                     <div className="mt-6 flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-600 border border-gray-100">
                         <div className="flex items-center gap-3 truncate">
-                            <svg className="h-5 w-5 shrink-0 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-5 w-5 shrink-0 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -406,7 +406,7 @@ export default function PurchaseOrderPdfPage() {
                                     placeholder="Ketik password PDF di sini..."
                                     value={passwordInput}
                                     onChange={(e) => setPasswordInput(e.target.value)}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
                                 />
                             </div>
 
@@ -424,7 +424,7 @@ export default function PurchaseOrderPdfPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
+                                    className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 transition"
                                 >
                                     Buka Kunci & Ekstrak
                                 </button>
@@ -457,10 +457,10 @@ export default function PurchaseOrderPdfPage() {
                             <p className="mt-1 text-xs text-amber-700">{summary.serviceCount} rincian transport / akomodasi</p>
                         </div>
 
-                        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-5 shadow-sm">
-                            <p className="text-xs font-bold uppercase tracking-wide text-indigo-800">Total Transaksi (Katalog)</p>
-                            <p className="mt-2 text-2xl font-bold text-indigo-950">{currencyFormatter.format(summary.totalTransaction)}</p>
-                            <p className="mt-1 text-xs text-indigo-700">
+                        <div className="rounded-2xl border border-teal-100 bg-teal-50/70 p-5 shadow-sm">
+                            <p className="text-xs font-bold uppercase tracking-wide text-teal-800">Total Transaksi (Katalog)</p>
+                            <p className="mt-2 text-2xl font-bold text-teal-950">{currencyFormatter.format(summary.totalTransaction)}</p>
+                            <p className="mt-1 text-xs text-teal-700">
                                 {pdfMeta.pdfTotalPayment ? `Estimasi + PPN: ${currencyFormatter.format(pdfMeta.pdfTotalPayment)}` : 'Produk + Layanan Tambahan'}
                             </p>
                         </div>
@@ -495,7 +495,7 @@ export default function PurchaseOrderPdfPage() {
                                 onClick={() => setActiveTab('products')}
                                 className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
                                     activeTab === 'products'
-                                        ? 'bg-white text-indigo-600 shadow-xs ring-1 ring-gray-200'
+                                        ? 'bg-white text-teal-600 shadow-xs ring-1 ring-gray-200'
                                         : 'text-gray-500 hover:text-gray-900'
                                 }`}
                             >
@@ -506,7 +506,7 @@ export default function PurchaseOrderPdfPage() {
                                 onClick={() => setActiveTab('services')}
                                 className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
                                     activeTab === 'services'
-                                        ? 'bg-white text-indigo-600 shadow-xs ring-1 ring-gray-200'
+                                        ? 'bg-white text-teal-600 shadow-xs ring-1 ring-gray-200'
                                         : 'text-gray-500 hover:text-gray-900'
                                 }`}
                             >
@@ -517,7 +517,7 @@ export default function PurchaseOrderPdfPage() {
                                 onClick={() => setActiveTab('all')}
                                 className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
                                     activeTab === 'all'
-                                        ? 'bg-white text-indigo-600 shadow-xs ring-1 ring-gray-200'
+                                        ? 'bg-white text-teal-600 shadow-xs ring-1 ring-gray-200'
                                         : 'text-gray-500 hover:text-gray-900'
                                 }`}
                             >
@@ -555,7 +555,7 @@ export default function PurchaseOrderPdfPage() {
                                                             updateService(item.id, { name: event.target.value });
                                                         }
                                                     }}
-                                                    className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 font-semibold text-gray-800 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+                                                    className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 font-semibold text-gray-800 outline-none transition focus:border-teal-300 focus:bg-white focus:ring-2 focus:ring-teal-100"
                                                 />
                                             </td>
                                             <td className="px-5 py-3 text-center">
@@ -584,7 +584,7 @@ export default function PurchaseOrderPdfPage() {
                                                             updateService(item.id, { unitPrice: val });
                                                         }
                                                     }}
-                                                    className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-right font-medium text-gray-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+                                                    className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-right font-medium text-gray-700 outline-none transition focus:border-teal-300 focus:bg-white focus:ring-2 focus:ring-teal-100"
                                                 />
                                             </td>
                                             <td className="px-5 py-3">
@@ -602,7 +602,7 @@ export default function PurchaseOrderPdfPage() {
                                                             updateService(item.id, { quantity: val });
                                                         }
                                                     }}
-                                                    className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-right font-medium text-gray-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+                                                    className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-right font-medium text-gray-700 outline-none transition focus:border-teal-300 focus:bg-white focus:ring-2 focus:ring-teal-100"
                                                 />
                                             </td>
                                             <td className="px-5 py-3 text-right font-bold text-emerald-700">
@@ -696,7 +696,7 @@ export default function PurchaseOrderPdfPage() {
                                                 <td className="px-5 py-4 text-right text-gray-900">
                                                     {quantityFormatter.format(summary.productQty + summary.serviceQty)}
                                                 </td>
-                                                <td className="px-5 py-4 text-right text-lg text-indigo-900">
+                                                <td className="px-5 py-4 text-right text-lg text-teal-900">
                                                     {currencyFormatter.format(summary.totalTransaction)}
                                                 </td>
                                                 <td />

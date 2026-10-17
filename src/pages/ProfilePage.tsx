@@ -141,11 +141,10 @@ export default function ProfilePage() {
     const meta = user.metadata;
 
     return (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+        <div className="mx-auto max-w-5xl pb-10">
             {/* Profile Header Card */}
-            <div className="relative mt-8 sm:mt-12 group">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-emerald-600/20 blur-3xl opacity-30 transition-opacity group-hover:opacity-50"></div>
-                <div className="relative bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-gray-100 dark:border-slate-800 rounded-3xl p-6 sm:p-10 shadow-xl">
+            <div className="relative mt-2">
+                <div className="relative rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_2px_rgba(20,45,52,0.04),0_8px_24px_rgba(20,45,52,0.035)] dark:border-slate-800 dark:bg-slate-900 sm:p-8">
                     <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-8">
                         <div className="flex flex-col sm:flex-row items-center gap-6">
                             <div className="relative">
@@ -153,7 +152,7 @@ export default function ProfilePage() {
                                     {user.photoURL ? (
                                         <img src={user.photoURL} alt={user.displayName ?? ''} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-4xl font-bold">
+                                        <div className="flex h-full w-full items-center justify-center bg-teal-700 text-4xl font-bold text-white">
                                             {(user.displayName || 'u').charAt(0).toUpperCase()}
                                         </div>
                                     )}
@@ -202,12 +201,12 @@ export default function ProfilePage() {
             </div>
 
             {/* Profile Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
+            <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
                 {/* Account Settings */}
                 <div className="space-y-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-gray-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_2px_rgba(20,45,52,0.04),0_8px_24px_rgba(20,45,52,0.035)] dark:border-slate-800 dark:bg-slate-900 sm:p-7">
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
@@ -248,7 +247,7 @@ export default function ProfilePage() {
 
                 {/* Responsible Person settings */}
                 <div className="space-y-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-gray-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md text-slate-900 dark:text-slate-100">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 text-slate-900 shadow-[0_1px_2px_rgba(20,45,52,0.04),0_8px_24px_rgba(20,45,52,0.035)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 sm:p-7">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

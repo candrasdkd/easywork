@@ -1,239 +1,103 @@
 @import "tailwindcss";
 
 @theme {
-  --color-blue-50: #f0f4f8;
-  --color-blue-100: #d9e2ec;
-  --color-blue-200: #bcccdc;
-  --color-blue-300: #9fb3c8;
-  --color-blue-400: #829ab1;
-  --color-blue-500: #627d98;
-  --color-blue-600: #486581;
-  --color-blue-700: #334e68;
-  --color-blue-800: #243b53;
-  --color-blue-900: #102a43;
+  --color-blue-50: #eef7f7;
+  --color-blue-100: #d7eceb;
+  --color-blue-200: #b3dad8;
+  --color-blue-300: #85c0bd;
+  --color-blue-400: #56a29e;
+  --color-blue-500: #318581;
+  --color-blue-600: #236e6b;
+  --color-blue-700: #1d5958;
+  --color-blue-800: #1b4848;
+  --color-blue-900: #193d3e;
 }
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
   color-scheme: light;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
+  font-family: "Roboto", "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #182a31;
+  background: #f4f7f8;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #f8fafc;
-  /* text-slate-50 */
-  color: #0f172a;
-  /* text-slate-900 */
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 82% -12%, rgb(215 236 235 / 38%), transparent 34rem),
+    #f4f7f8;
+  color: #182a31;
 }
 
-/* ============================================
-   Custom Cursor System — Orange Theme
-   Hotspot tip: koordinat "x y" harus nempel di
-   ujung visual kursor (bukan tengah/asal tebak)
-   ============================================ */
-
-:root {
-  --cursor-fill: %23c2410c;
-  /* orange-700 */
-  --cursor-fill-active: %239a3412;
-  /* orange-800, buat active/pressed state */
-  --cursor-stroke: %23ffffff;
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
-/* ============================================
-   Custom Cursor System
-   Modern Orange Pointer
-   ============================================ */
-
-:root {
-  --cursor-orange: #c2410c;
-  --cursor-orange-dark: #9a3412;
+button,
+a,
+input[type="checkbox"],
+input[type="radio"] {
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Nonaktifkan custom cursor di perangkat touchscreen */
-@media (hover: hover) and (pointer: fine) {
-  /* --------------------------------------------
-     DEFAULT — Rounded arrow
-     Hotspot tepat pada ujung panah: 3 2
-     -------------------------------------------- */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgb(49 133 129 / 25%);
+  outline-offset: 2px;
+}
 
-  html,
-  body {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%23ffffff' stroke='%23ffffff' stroke-width='3.6' stroke-linejoin='round'/%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%23c2410c' stroke='%239a3412' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 3 2,
-      auto;
-  }
+::selection {
+  background: #c7e6e4;
+  color: #153c3b;
+}
 
-  /* --------------------------------------------
-     POINTER — Arrow dengan lingkaran kecil
-     Lebih clean daripada cursor berbentuk ring besar
-     -------------------------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
 
-  a,
-  button,
-  [role="button"],
-  select,
-  summary,
-  label[for],
-  input[type="submit"],
-  input[type="button"],
-  input[type="checkbox"],
-  input[type="radio"],
-  .cursor-pointer {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='34' viewBox='0 0 30 34'%3E%3Ccircle cx='20.5' cy='22.5' r='7' fill='%23fff7ed' stroke='%23c2410c' stroke-width='2'/%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%23ffffff' stroke='%23ffffff' stroke-width='3.6' stroke-linejoin='round'/%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%23c2410c' stroke='%239a3412' stroke-width='1.4' stroke-linejoin='round'/%3E%3Ccircle cx='20.5' cy='22.5' r='2.2' fill='%23c2410c'/%3E%3C/svg%3E") 3 2,
-      pointer !important;
-  }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-  /* --------------------------------------------
-     ACTIVE — Cursor sedikit lebih kecil dan gelap
-     -------------------------------------------- */
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: #c6d2d5;
+  background-clip: padding-box;
+}
 
-  a:active,
-  button:active,
-  [role="button"]:active,
-  .cursor-pointer:active {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='29' viewBox='0 0 28 32'%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%23ffffff' stroke='%23ffffff' stroke-width='3.6' stroke-linejoin='round'/%3E%3Cpath d='M3.2 2.2c-.75-.46-1.68.19-1.5 1.05l4.8 23.5c.2.97 1.47 1.22 2.02.4l4.05-6.1 6.43 6.1c.43.4 1.1.39 1.5-.04l2.48-2.67c.4-.43.38-1.1-.04-1.5l-6.26-5.93 7.22-2.7c.94-.35 1.02-1.64.14-2.1L3.2 2.2Z' fill='%239a3412' stroke='%237c2d12' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 3 2,
-      pointer !important;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: #9eafb3;
+  background-clip: padding-box;
+}
 
-  /* --------------------------------------------
-     TEXT
-     -------------------------------------------- */
-
-  input[type="text"],
-  input[type="email"],
-  input[type="search"],
-  input[type="number"],
-  input[type="password"],
-  input[type="url"],
-  input[type="tel"],
-  textarea,
-  [contenteditable="true"],
-  .cursor-text {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='28' viewBox='0 0 18 28'%3E%3Cpath d='M4 3h10M9 3v22M4 25h10' fill='none' stroke='%23ffffff' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M4 3h10M9 3v22M4 25h10' fill='none' stroke='%23c2410c' stroke-width='2.3' stroke-linecap='round'/%3E%3C/svg%3E") 9 14,
-      text !important;
-  }
-
-  /* --------------------------------------------
-     GRAB
-     -------------------------------------------- */
-
-  [draggable="true"],
-  .cursor-grab {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect x='3' y='3' width='22' height='22' rx='8' fill='%23fff7ed' stroke='%23c2410c' stroke-width='2'/%3E%3Ccircle cx='10' cy='10' r='1.7' fill='%23c2410c'/%3E%3Ccircle cx='18' cy='10' r='1.7' fill='%23c2410c'/%3E%3Ccircle cx='10' cy='18' r='1.7' fill='%23c2410c'/%3E%3Ccircle cx='18' cy='18' r='1.7' fill='%23c2410c'/%3E%3C/svg%3E") 14 14,
-      grab !important;
-  }
-
-  [draggable="true"]:active,
-  .cursor-grabbing,
-  .dragging {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 28 28'%3E%3Crect x='3' y='3' width='22' height='22' rx='8' fill='%23c2410c' stroke='%239a3412' stroke-width='2'/%3E%3Ccircle cx='10' cy='10' r='1.7' fill='%23ffffff'/%3E%3Ccircle cx='18' cy='10' r='1.7' fill='%23ffffff'/%3E%3Ccircle cx='10' cy='18' r='1.7' fill='%23ffffff'/%3E%3Ccircle cx='18' cy='18' r='1.7' fill='%23ffffff'/%3E%3C/svg%3E") 13 13,
-      grabbing !important;
-  }
-
-  /* --------------------------------------------
-     MOVE
-     -------------------------------------------- */
-
-  .cursor-move {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M14 2l4.5 5H16v5h5V9.5l5 4.5-5 4.5V16h-5v5h2.5L14 26l-4.5-5H12v-5H7v2.5L2 14l5-4.5V12h5V7H9.5z' fill='%23ffffff' stroke='%23ffffff' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M14 2l4.5 5H16v5h5V9.5l5 4.5-5 4.5V16h-5v5h2.5L14 26l-4.5-5H12v-5H7v2.5L2 14l5-4.5V12h5V7H9.5z' fill='%23c2410c'/%3E%3C/svg%3E") 14 14,
-      move !important;
-  }
-
-  /* --------------------------------------------
-     RESIZE
-     Menggunakan cursor native agar presisi dan familiar
-     -------------------------------------------- */
-
-  .cursor-resize-ns {
-    cursor: ns-resize !important;
-  }
-
-  .cursor-resize-ew {
-    cursor: ew-resize !important;
-  }
-
-  .cursor-resize-nesw {
-    cursor: nesw-resize !important;
-  }
-
-  .cursor-resize-nwse {
-    cursor: nwse-resize !important;
-  }
-
-  /* --------------------------------------------
-     DISABLED / NOT ALLOWED
-     -------------------------------------------- */
-
-  [disabled],
-  [aria-disabled="true"],
-  .cursor-not-allowed {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='10' fill='%23fff7ed' stroke='%23c2410c' stroke-width='2.5'/%3E%3Cpath d='M7 21 21 7' stroke='%23c2410c' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 14 14,
-      not-allowed !important;
-  }
-
-  /* Hindari disabled element terkena style pointer */
-  button:disabled,
-  input:disabled,
-  select:disabled,
-  [role="button"][aria-disabled="true"] {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='10' fill='%23fff7ed' stroke='%23c2410c' stroke-width='2.5'/%3E%3Cpath d='M7 21 21 7' stroke='%23c2410c' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 14 14,
-      not-allowed !important;
-  }
-
-  /* --------------------------------------------
-     COPY
-     -------------------------------------------- */
-
-  .cursor-copy {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect x='4' y='7' width='15' height='16' rx='4' fill='%23ffffff' stroke='%23c2410c' stroke-width='2'/%3E%3Crect x='9' y='3' width='15' height='16' rx='4' fill='%23fff7ed' stroke='%23c2410c' stroke-width='2'/%3E%3Cpath d='M16.5 7v8M12.5 11h8' stroke='%23c2410c' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 14 14,
-      copy !important;
-  }
-
-  /* --------------------------------------------
-     WAIT
-     -------------------------------------------- */
-
-  .cursor-wait,
-  [aria-busy="true"] {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='9' fill='none' stroke='%23fed7aa' stroke-width='3'/%3E%3Cpath d='M14 5a9 9 0 0 1 8.7 6.7' fill='none' stroke='%23c2410c' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='14' cy='14' r='2' fill='%23c2410c'/%3E%3C/svg%3E") 14 14,
-      wait !important;
-  }
-
-  /* --------------------------------------------
-     ZOOM
-     -------------------------------------------- */
-
-  .cursor-zoom-in {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='11.5' cy='11.5' r='7.5' fill='%23ffffff' stroke='%23c2410c' stroke-width='2.5'/%3E%3Cpath d='M17 17l7 7M11.5 8v7M8 11.5h7' fill='none' stroke='%23c2410c' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") 11 11,
-      zoom-in !important;
-  }
-
-  .cursor-zoom-out {
-    cursor:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='11.5' cy='11.5' r='7.5' fill='%23ffffff' stroke='%23c2410c' stroke-width='2.5'/%3E%3Cpath d='M17 17l7 7M8 11.5h7' fill='none' stroke='%23c2410c' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") 11 11,
-      zoom-out !important;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

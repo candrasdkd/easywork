@@ -235,23 +235,23 @@ export default function EquipmentCheckPage() {
             ]}
         >
             {/* Tab bar */}
-            <div className="flex gap-1 p-1 bg-gray-100 dark:bg-slate-800 rounded-xl mb-6 w-fit">
+            <div className="mb-6 flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl border border-slate-200/80 bg-slate-100/80 p-1 dark:border-slate-700 dark:bg-slate-800">
                 <button
                     onClick={() => setActiveTab('input')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
                         activeTab === 'input'
-                            ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'bg-white text-teal-800 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-700 dark:text-teal-200'
+                            : 'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
                     }`}
                 >
                     Input & Pengecekan
                 </button>
                 <button
                     onClick={() => setActiveTab('review')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
                         activeTab === 'review'
-                            ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'bg-white text-teal-800 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-700 dark:text-teal-200'
+                            : 'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
                     }`}
                 >
                     Review Pengecekan Alat
@@ -303,7 +303,7 @@ export default function EquipmentCheckPage() {
                             <textarea
                                 value={rawText}
                                 onChange={(e) => setRawText(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white outline-none transition-all text-sm font-mono min-h-[200px] resize-y"
+                                className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 font-mono text-sm outline-none transition-all focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white min-h-[200px]"
                                 placeholder={"Contoh:\nUSG Portable\nOxymeter Finger\nECG 12 Lead\nNebulizer Portable"}
                                 disabled={submitting}
                             />

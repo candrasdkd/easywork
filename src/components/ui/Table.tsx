@@ -17,14 +17,14 @@ interface TableProps<T> {
 
 export function Table<T>({ columns, data, onRowClick, loading, getRowId }: TableProps<T>) {
     return (
-        <div className="w-full overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-800">
+        <div className="w-full overflow-x-auto rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900">
             <table className="w-full text-sm text-left border-collapse">
-                <thead className="bg-gray-50/50 dark:bg-slate-800/50 text-gray-600 dark:text-gray-400 uppercase text-xs font-bold">
+                <thead className="bg-slate-50 text-slate-500 dark:bg-slate-800/70 dark:text-gray-400 uppercase text-[11px] font-bold tracking-wide">
                     <tr>
                         {columns.map((col, idx) => (
                             <th
                                 key={idx}
-                                className={`px-6 py-4 border-b border-gray-100 dark:border-slate-800 ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'}`}
+                                className={`px-5 py-3.5 border-b border-slate-200/80 dark:border-slate-800 ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'}`}
                                 style={{ width: col.width }}
                             >
                                 {col.header}
@@ -32,7 +32,7 @@ export function Table<T>({ columns, data, onRowClick, loading, getRowId }: Table
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {loading ? (
                         <tr>
                             <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500">
