@@ -64,6 +64,72 @@ const previewFieldWidths: Record<CertificateField, number> = {
     performedDate: 120,
 };
 
+type PreviewColumnKey = 'rowNumber' | 'label' | 'equipmentName' | CertificateField | 'status' | 'source';
+
+const previewColumnKeys: PreviewColumnKey[] = [
+    'rowNumber', 'label', 'equipmentName', ...previewFieldColumns.map(({ field }) => field), 'status', 'source',
+];
+
+const defaultPreviewColumnWidths: Record<PreviewColumnKey, number> = {
+    rowNumber: 48,
+    label: 110,
+    equipmentName: 140,
+    ...previewFieldWidths,
+    status: 190,
+    source: 180,
+};
+
+const previewColumnWidthsStorageKey = 'easywork:certificate-preview-column-widths';
+
+function clampPreviewColumnWidth(key: PreviewColumnKey, width: number): number {
+    const minimum = key === 'rowNumber' ? 42 : key === 'status' ? 110 : key === 'source' ? 90 : 55;
+    return Math.max(minimum, Math.min(600, Math.round(width)));
+}
+
+function loadPreviewColumnWidths(): Record<PreviewColumnKey, number> {
+    if (typeof localStorage === 'undefined') return defaultPreviewColumnWidths;
+    try {
+        const saved = JSON.parse(localStorage.getItem(previewColumnWidthsStorageKey) ?? '{}') as Partial<Record<PreviewColumnKey, unknown>>;
+        return previewColumnKeys.reduce((widths, key) => {
+            const value = saved[key];
+            if (typeof value === 'number' && Number.isFinite(value)) widths[key] = clampPreviewColumnWidth(key, value);
+            return widths;
+        }, { ...defaultPreviewColumnWidths });
+    } catch {
+        return defaultPreviewColumnWidths;
+    }
+}
+
+interface ResizableHeaderCellProps {
+    columnKey: PreviewColumnKey;
+    label: string;
+    width: number;
+    onResizeStart: (event: React.PointerEvent<HTMLButtonElement>, column: PreviewColumnKey) => void;
+    onAdjust: (column: PreviewColumnKey, delta: number) => void;
+}
+
+function ResizableHeaderCell({ columnKey, label, width, onResizeStart, onAdjust }: ResizableHeaderCellProps) {
+    return (
+        <th className="relative px-3 py-3 pr-4 font-semibold" style={{ width }}>
+            <span className="block">{label}</span>
+            <button
+                type="button"
+                aria-label={`Ubah lebar kolom ${label}; gunakan panah kiri atau kanan`}
+                title="Tarik untuk mengubah lebar kolom"
+                onPointerDown={(event) => onResizeStart(event, columnKey)}
+                onKeyDown={(event) => {
+                    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+                    event.preventDefault();
+                    onAdjust(columnKey, event.key === 'ArrowLeft' ? -12 : 12);
+                }}
+                className="group absolute inset-y-0 right-0 z-10 flex w-2 touch-none cursor-col-resize items-center justify-center border-l border-gray-300 bg-transparent transition-colors hover:border-teal-600 hover:bg-teal-500/20 focus:border-teal-600 focus:bg-teal-500/20 focus:outline-none dark:border-slate-600"
+            >
+                <span className="h-4 w-0.5 rounded-full bg-gray-400 transition-colors group-hover:bg-teal-700 dark:bg-slate-400 dark:group-hover:bg-teal-200" />
+            </button>
+        </th>
+    );
+}
+
 function sourceFileKey(file: File) {
     const restoredKey = restoredFileKeys.get(file);
     if (restoredKey) return restoredKey;
@@ -107,6 +173,62 @@ export default function CertificateMasterPage() {
     const [restoredFromStorage, setRestoredFromStorage] = React.useState(false);
     const persistenceQueue = React.useRef<Promise<void>>(Promise.resolve());
     const persistenceRevision = React.useRef(0);
+    const [columnWidths, setColumnWidths] = React.useState(loadPreviewColumnWidths);
+    const previewTableRef = React.useRef<HTMLTableElement | null>(null);
+    const resizeCleanup = React.useRef<(() => void) | null>(null);
+    const totalColumnWidth = previewColumnKeys.reduce((sum, key) => sum + columnWidths[key], 0);
+
+    const updateColumnWidth = React.useCallback((column: PreviewColumnKey, width: number) => {
+        const nextWidths = { ...columnWidths, [column]: clampPreviewColumnWidth(column, width) };
+        setColumnWidths(nextWidths);
+        try {
+            localStorage.setItem(previewColumnWidthsStorageKey, JSON.stringify(nextWidths));
+        } catch {
+            // Resizing still works for this page session when browser storage is unavailable.
+        }
+    }, [columnWidths]);
+
+    const startColumnResize = React.useCallback((event: React.PointerEvent<HTMLButtonElement>, column: PreviewColumnKey) => {
+        event.preventDefault();
+        event.stopPropagation();
+        resizeCleanup.current?.();
+
+        const table = previewTableRef.current;
+        const columnIndex = previewColumnKeys.indexOf(column);
+        const columnElement = table?.querySelectorAll('col').item(columnIndex);
+        if (!table || !(columnElement instanceof HTMLTableColElement)) return;
+
+        const startX = event.clientX;
+        const startWidth = columnWidths[column];
+        const startingTotalWidth = totalColumnWidth;
+        const pointerId = event.pointerId;
+        let latestWidth = startWidth;
+
+        const onPointerMove = (moveEvent: PointerEvent) => {
+            if (moveEvent.pointerId !== pointerId) return;
+            latestWidth = clampPreviewColumnWidth(column, startWidth + moveEvent.clientX - startX);
+            columnElement.style.width = `${latestWidth}px`;
+            table.style.minWidth = `${startingTotalWidth + latestWidth - startWidth}px`;
+        };
+        const cleanup = () => {
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerEnd);
+            window.removeEventListener('pointercancel', onPointerEnd);
+            resizeCleanup.current = null;
+        };
+        const onPointerEnd = (endEvent: PointerEvent) => {
+            if (endEvent.pointerId !== pointerId) return;
+            cleanup();
+            updateColumnWidth(column, latestWidth);
+        };
+
+        resizeCleanup.current = cleanup;
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerEnd);
+        window.addEventListener('pointercancel', onPointerEnd);
+    }, [columnWidths, totalColumnWidth, updateColumnWidth]);
+
+    React.useEffect(() => () => resizeCleanup.current?.(), []);
 
     React.useEffect(() => {
         let cancelled = false;
@@ -609,30 +731,25 @@ export default function CertificateMasterPage() {
                     <Card>
                         <div className="border-b border-gray-100 px-5 py-4 dark:border-slate-800">
                             <h2 className="font-bold text-gray-900 dark:text-white">Pratinjau pengisian</h2>
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Kalau nilai beda, pilih <strong>MASTER benar</strong> untuk mempertahankan MASTER atau <strong>Pakai LK</strong> untuk menggantinya. Edit nilai langsung dengan klik sel; hasil yang sudah dicek akan berwarna hijau.</p>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Kalau nilai beda, pilih <strong>MASTER benar</strong> untuk mempertahankan MASTER atau <strong>Pakai LK</strong> untuk menggantinya. Edit nilai langsung dengan klik sel; hasil yang sudah dicek akan berwarna hijau. Tarik batas kanan judul kolom untuk mengubah lebarnya; ukuran tersimpan di browser.</p>
                         </div>
                         <div className="max-h-[95vh] overflow-auto">
-                            <table className="table-fixed min-w-[1823px] w-full text-left text-xs">
+                            <table ref={previewTableRef} className="table-fixed w-full text-left text-xs" style={{ minWidth: `${totalColumnWidth}px` }}>
                                 <colgroup>
-                                    <col style={{ width: '48px' }} />
-                                    <col style={{ width: '110px' }} />
-                                    <col style={{ width: '140px' }} />
-                                    {previewFieldColumns.map((column) => (
-                                        <col key={column.field} style={{ width: `${previewFieldWidths[column.field]}px` }} />
+                                    {previewColumnKeys.map((column) => (
+                                        <col key={column} style={{ width: `${columnWidths[column]}px` }} />
                                     ))}
-                                    <col style={{ width: '190px' }} />
-                                    <col style={{ width: '180px' }} />
                                 </colgroup>
                                 <thead className="sticky top-0 z-10 bg-gray-50 text-gray-600 dark:bg-slate-800 dark:text-gray-300">
                                     <tr>
-                                        <th className="px-3 py-3 font-semibold">Baris</th>
-                                        <th className="px-3 py-3 font-semibold">No. Label</th>
-                                        <th className="px-3 py-3 font-semibold">Nama Alat</th>
+                                        <ResizableHeaderCell columnKey="rowNumber" label="Baris" width={columnWidths.rowNumber} onResizeStart={startColumnResize} onAdjust={updateColumnWidth} />
+                                        <ResizableHeaderCell columnKey="label" label="No. Label" width={columnWidths.label} onResizeStart={startColumnResize} onAdjust={updateColumnWidth} />
+                                        <ResizableHeaderCell columnKey="equipmentName" label="Nama Alat" width={columnWidths.equipmentName} onResizeStart={startColumnResize} onAdjust={updateColumnWidth} />
                                         {previewFieldColumns.map((column) => (
-                                            <th key={column.field} className="px-3 py-3 font-semibold">{column.label}</th>
+                                            <ResizableHeaderCell key={column.field} columnKey={column.field} label={column.label} width={columnWidths[column.field]} onResizeStart={startColumnResize} onAdjust={updateColumnWidth} />
                                         ))}
-                                        <th className="px-3 py-3 font-semibold">Status / dasar cocok</th>
-                                        <th className="px-3 py-3 font-semibold">Sumber</th>
+                                        <ResizableHeaderCell columnKey="status" label="Status / dasar cocok" width={columnWidths.status} onResizeStart={startColumnResize} onAdjust={updateColumnWidth} />
+                                        <ResizableHeaderCell columnKey="source" label="Sumber" width={columnWidths.source} onResizeStart={startColumnResize} onAdjust={updateColumnWidth} />
                                     </tr>
                                 </thead>
                                 <tbody>
