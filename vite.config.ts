@@ -16,6 +16,7 @@ export default defineConfig({
       // Opsi untuk cache (Workbox)
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff,woff2}'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.example\.com\/.*/, // Ganti dengan URL API Anda

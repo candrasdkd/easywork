@@ -12,6 +12,7 @@ const navItems = [
     { label: 'SPH', path: '/mass-import', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg> },
     { label: 'Pesanan PDF', path: '/ekstrak-pesanan-pdf', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M8 13h8M8 17h5" /></svg> },
     { label: 'Cek Alat', path: '/cek-alat', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+    { label: 'Master Sertifikat', path: '/isi-master-sertifikat', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 4v15a2 2 0 01-2 2z" /></svg> },
     { label: 'Referensi', path: '/referensi-alat', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
 ];
 
@@ -68,10 +69,10 @@ export default function Navbar() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Mobile menu button */}
-                        <div className="flex items-center sm:hidden">
+                        <div className="flex items-center lg:hidden">
                             <button
                                 onClick={() => setMobileOpen(!mobileOpen)}
-                                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-slate-800 focus:outline-none"
+                                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-slate-800 focus:outline-none lg:hidden"
                             >
                                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -80,13 +81,13 @@ export default function Navbar() {
                         </div>
 
                         {/* Desktop Navigation */}
-                        <div className="hidden sm:flex sm:items-center sm:space-x-4">
+                        <div className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto lg:flex lg:mx-2">
                             {navItems.map((item) => (
                                 <NavLink
                                     key={item.label}
                                     to={item.path}
                                     className={({ isActive }) => `
-                                        flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all
+                                        flex shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-all xl:gap-2 xl:px-2.5 xl:text-sm
                                         ${isActive
                                             ? 'bg-slate-800 text-white shadow-inner scale-105 border border-slate-700'
                                             : 'text-slate-300 hover:bg-slate-800 hover:text-white'}
@@ -147,7 +148,7 @@ export default function Navbar() {
 
                 {/* Mobile Navigation Drawer */}
                 {mobileOpen && (
-                    <div className="sm:hidden bg-slate-900 border-t border-slate-800 animate-in slide-in-from-top duration-200">
+                    <div className="lg:hidden bg-slate-900 border-t border-slate-800 animate-in slide-in-from-top duration-200">
                         <div className="px-2 pt-2 pb-3 space-y-1">
                             {navItems.map((item) => (
                                 <NavLink
