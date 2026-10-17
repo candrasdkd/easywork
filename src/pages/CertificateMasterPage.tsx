@@ -14,8 +14,15 @@ import {
     type CertificateField,
     type CertificateFillResult,
 } from '../lib/certificateMaster';
+import {
+    loadCertificateFile,
+    loadCertificateSession,
+    saveCertificateWorkspace,
+    type CertificateSessionSnapshot,
+} from '../lib/certificateMasterStorage';
 
 const manualFileIds = new WeakMap<File, number>();
+const restoredFileKeys = new WeakMap<File, string>();
 let nextManualFileId = 0;
 
 const previewFieldColumns: Array<{ field: CertificateField; label: string }> = [
@@ -58,6 +65,8 @@ const previewFieldWidths: Record<CertificateField, number> = {
 };
 
 function sourceFileKey(file: File) {
+    const restoredKey = restoredFileKeys.get(file);
+    if (restoredKey) return restoredKey;
     if (file.webkitRelativePath) {
         return `folder\u0000${file.webkitRelativePath}\u0000${file.size}\u0000${file.lastModified}`;
     }
@@ -73,6 +82,12 @@ function sourceFileKey(file: File) {
     return `manual\u0000${id}`;
 }
 
+function rememberRestoredFileKey(file: File, key: string) {
+    restoredFileKeys.set(file, key);
+    const manualId = key.match(/^manual\u0000(\d+)$/)?.[1];
+    if (manualId) nextManualFileId = Math.max(nextManualFileId, Number(manualId) + 1);
+}
+
 export default function CertificateMasterPage() {
     const [masterFile, setMasterFile] = React.useState<File | null>(null);
     const [masterWorkbook, setMasterWorkbook] = React.useState<XLSX.WorkBook | null>(null);
@@ -86,6 +101,122 @@ export default function CertificateMasterPage() {
     const [progress, setProgress] = React.useState('');
     const [editingCell, setEditingCell] = React.useState<{ rowNumber: number; field: CertificateField } | null>(null);
     const [editDraft, setEditDraft] = React.useState('');
+    const [storageReady, setStorageReady] = React.useState(false);
+    const [storageStatus, setStorageStatus] = React.useState<'checking' | 'saving' | 'saved' | 'empty' | 'error'>('checking');
+    const [storageError, setStorageError] = React.useState('');
+    const [restoredFromStorage, setRestoredFromStorage] = React.useState(false);
+    const persistenceQueue = React.useRef<Promise<void>>(Promise.resolve());
+    const persistenceRevision = React.useRef(0);
+
+    React.useEffect(() => {
+        let cancelled = false;
+
+        const restoreSavedWorkspace = async () => {
+            try {
+                const session = await loadCertificateSession();
+                if (session) {
+                    let restoredMasterFile: File | null = null;
+                    let restoredMasterWorkbook: XLSX.WorkBook | null = null;
+                    if (session.masterFileId) {
+                        const storedMasterFile = await loadCertificateFile(session.masterFileId);
+                        if (storedMasterFile) {
+                            restoredMasterFile = new File([storedMasterFile.data], storedMasterFile.name, {
+                                type: storedMasterFile.type,
+                                lastModified: storedMasterFile.lastModified,
+                            });
+                            rememberRestoredFileKey(restoredMasterFile, storedMasterFile.key);
+                            restoredMasterWorkbook = XLSX.read(await restoredMasterFile.arrayBuffer(), {
+                                type: 'array',
+                                cellDates: true,
+                                cellStyles: true,
+                            });
+                        }
+                    }
+
+                    const restoredSourceFiles: File[] = [];
+                    for (const fileId of session.sourceFileIds) {
+                        const storedFile = await loadCertificateFile(fileId);
+                        if (!storedFile) continue;
+                        const file = new File([storedFile.data], storedFile.name, {
+                            type: storedFile.type,
+                            lastModified: storedFile.lastModified,
+                        });
+                        rememberRestoredFileKey(file, storedFile.key);
+                        restoredSourceFiles.push(file);
+                    }
+
+                    if (!cancelled) {
+                        setMasterFile(restoredMasterFile);
+                        setMasterWorkbook(restoredMasterWorkbook);
+                        setTargetSheet(session.targetSheet || (restoredMasterWorkbook ? suggestMasterSheet(restoredMasterWorkbook) : ''));
+                        setSourceFiles(restoredSourceFiles);
+                        setResult(session.result);
+                        setOutputWorkbook(session.outputWorkbook as XLSX.WorkBook | null);
+                        setWarnings(session.warnings ?? []);
+                        setRestoredFromStorage(Boolean(session.masterFileId || session.sourceFileIds.length || session.result));
+                        setStorageStatus('saved');
+                    }
+                } else if (!cancelled) {
+                    setStorageStatus('empty');
+                }
+            } catch (cause) {
+                if (!cancelled) {
+                    setStorageError((cause as Error).message || 'Tidak bisa membaca simpanan lokal.');
+                    setStorageStatus('error');
+                }
+            } finally {
+                if (!cancelled) setStorageReady(true);
+            }
+        };
+
+        void restoreSavedWorkspace();
+        return () => { cancelled = true; };
+    }, []);
+
+    React.useEffect(() => {
+        if (!storageReady) return undefined;
+        const revision = persistenceRevision.current + 1;
+        persistenceRevision.current = revision;
+
+        const files: Array<{ id: string; key: string; file: File }> = [];
+        if (masterFile) {
+            const key = sourceFileKey(masterFile);
+            files.push({ id: `master:${key}`, key, file: masterFile });
+        }
+        sourceFiles.forEach((file) => {
+            const key = sourceFileKey(file);
+            files.push({ id: `source:${key}`, key, file });
+        });
+        const keepFileIds = files.map(({ id }) => id);
+        const hasWorkspace = Boolean(masterFile || sourceFiles.length || result || outputWorkbook);
+        const snapshot: CertificateSessionSnapshot | null = hasWorkspace ? {
+            masterFileId: masterFile ? `master:${sourceFileKey(masterFile)}` : null,
+            sourceFileIds: sourceFiles.map((file) => `source:${sourceFileKey(file)}`),
+            targetSheet,
+            result,
+            outputWorkbook,
+            warnings,
+            savedAt: Date.now(),
+        } : null;
+
+        const timer = window.setTimeout(() => {
+            setStorageStatus('saving');
+            setStorageError('');
+            persistenceQueue.current = persistenceQueue.current
+                .catch(() => undefined)
+                .then(() => saveCertificateWorkspace(files, keepFileIds, snapshot))
+                .then(() => {
+                    if (persistenceRevision.current === revision) setStorageStatus(hasWorkspace ? 'saved' : 'empty');
+                })
+                .catch((cause: unknown) => {
+                    if (persistenceRevision.current !== revision) return;
+                    setStorageError((cause as Error).message || 'Simpanan lokal gagal.');
+                    setStorageStatus('error');
+                });
+        }, 350);
+
+        return () => window.clearTimeout(timer);
+    }, [storageReady, masterFile, sourceFiles, targetSheet, result, outputWorkbook, warnings]);
 
     const clearResult = React.useCallback(() => {
         setResult(null);
@@ -321,6 +452,7 @@ export default function CertificateMasterPage() {
                         <input
                             type="file"
                             accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                            disabled={!storageReady}
                             className="block w-full text-sm text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-blue-700 dark:text-gray-300"
                             onChange={(event) => {
                                 void handleMasterUpload(event.target.files?.[0]);
@@ -334,6 +466,7 @@ export default function CertificateMasterPage() {
                                 <select
                                     id="certificate-master-sheet"
                                     value={targetSheet}
+                                    disabled={!storageReady}
                                     onChange={(event) => {
                                         setTargetSheet(event.target.value);
                                         clearResult();
@@ -367,6 +500,7 @@ export default function CertificateMasterPage() {
                                 <input
                                     type="file"
                                     multiple
+                                    disabled={!storageReady}
                                     accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                                     className="block w-full text-sm font-normal text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-teal-700 dark:text-gray-300"
                                     onChange={(event) => {
@@ -381,6 +515,7 @@ export default function CertificateMasterPage() {
                                     ref={(input) => input?.setAttribute('webkitdirectory', '')}
                                     type="file"
                                     multiple
+                                    disabled={!storageReady}
                                     accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                                     className="block w-full text-sm font-normal text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-teal-700 dark:text-gray-300"
                                     onChange={(event) => {
@@ -416,7 +551,7 @@ export default function CertificateMasterPage() {
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
-                <Button onClick={() => void handleProcess()} loading={busy} disabled={!masterFile || !sourceFiles.length || !targetSheet}>
+                <Button onClick={() => void handleProcess()} loading={busy} disabled={!storageReady || !masterFile || !sourceFiles.length || !targetSheet}>
                     Proses dan cocokkan
                 </Button>
                 {outputWorkbook && result && (
@@ -427,6 +562,17 @@ export default function CertificateMasterPage() {
                 {busy && (
                     <p className="text-sm text-gray-500 dark:text-gray-400" role="status">{progress}</p>
                 )}
+                <p className={`text-xs ${storageStatus === 'error' ? 'text-rose-700 dark:text-rose-300' : 'text-gray-500 dark:text-gray-400'}`} role="status" aria-live="polite">
+                    {!storageReady || storageStatus === 'checking'
+                        ? 'Memeriksa simpanan lokal…'
+                        : storageStatus === 'saving'
+                            ? 'Menyimpan otomatis…'
+                            : storageStatus === 'error'
+                                ? `Autosave gagal: ${storageError}`
+                                : storageStatus === 'saved'
+                                    ? `${restoredFromStorage ? 'Sesi terakhir dipulihkan. ' : ''}Tersimpan otomatis di browser ini.`
+                                    : 'Autosave aktif di browser ini.'}
+                </p>
             </div>
 
             {error && (
@@ -465,7 +611,7 @@ export default function CertificateMasterPage() {
                             <h2 className="font-bold text-gray-900 dark:text-white">Pratinjau pengisian</h2>
                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Kalau nilai beda, pilih <strong>MASTER benar</strong> untuk mempertahankan MASTER atau <strong>Pakai LK</strong> untuk menggantinya. Edit nilai langsung dengan klik sel; hasil yang sudah dicek akan berwarna hijau.</p>
                         </div>
-                        <div className="max-h-[560px] overflow-auto">
+                        <div className="max-h-[95vh] overflow-auto">
                             <table className="table-fixed min-w-[1823px] w-full text-left text-xs">
                                 <colgroup>
                                     <col style={{ width: '48px' }} />
@@ -492,11 +638,11 @@ export default function CertificateMasterPage() {
                                 <tbody>
                                     {result.previewRows.map((row) => (
                                         <tr key={`${row.rowNumber}-${row.label}`} className="border-t border-gray-100 align-top dark:border-slate-800">
-                                            <td className="px-3 py-3 text-gray-500">{row.rowNumber}</td>
-                                            <td className="px-3 py-3 font-medium text-gray-800 dark:text-gray-200">{row.label}</td>
-                                            <td className="px-3 py-3 text-gray-800 dark:text-gray-200">{row.equipmentName}</td>
+                                            <td className="px-3 py-2 text-gray-500">{row.rowNumber}</td>
+                                            <td className="px-3 py-2 font-medium text-gray-800 dark:text-gray-200">{row.label}</td>
+                                            <td className="px-3 py-2 text-gray-800 dark:text-gray-200">{row.equipmentName}</td>
                                             {previewFieldColumns.map((column) => (
-                                                <td key={column.field} className="overflow-hidden px-2 py-3 text-gray-700 dark:text-gray-300">
+                                                <td key={column.field} className="overflow-hidden px-2 py-2 text-gray-700 dark:text-gray-300">
                                                     {selectedLayout?.columns[column.field] !== undefined ? (
                                                         editingCell?.rowNumber === row.rowNumber && editingCell.field === column.field ? (
                                                             <textarea
@@ -547,14 +693,14 @@ export default function CertificateMasterPage() {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => confirmMasterValue(row.rowNumber, column.field)}
-                                                                        className="rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                                                        className="whitespace-nowrap rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
                                                                     >
                                                                         ✓ MASTER benar
                                                                     </button>
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleFieldEdit(row.rowNumber, column.field, row.sourceValues[column.field])}
-                                                                        className="rounded border border-rose-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:bg-slate-900 dark:text-rose-300"
+                                                                        className="whitespace-nowrap rounded border border-rose-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:bg-slate-900 dark:text-rose-300"
                                                                     >
                                                                         Pakai LK
                                                                     </button>
@@ -572,7 +718,7 @@ export default function CertificateMasterPage() {
                                                         && <span className="ml-1 block break-words text-[11px] text-gray-500 dark:text-gray-400">LK {row.sourceValues[column.field]}</span>}
                                                 </td>
                                             ))}
-                                            <td className="px-3 py-3">
+                                            <td className="px-3 py-2">
                                                 <div className="flex flex-wrap gap-1">
                                                     <span className={`inline-flex rounded-full px-2 py-1 font-semibold ${row.status === 'Tidak ditemukan' || row.ambiguousLabelMatch || row.ambiguousSourceMatch || row.sourceAlreadyUsed || row.conflicts.length > 0 || row.matchedByLabelOnly ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300' : row.filledCount > 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300'}`}>
                                                         {row.status}
@@ -607,7 +753,7 @@ export default function CertificateMasterPage() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="max-w-56 px-3 py-3 text-gray-500 dark:text-gray-400" title={row.sourceNames.join(', ')}>{row.sourceNames.join(', ') || '—'}</td>
+                                            <td className="max-w-56 px-3 py-2 text-gray-500 dark:text-gray-400" title={row.sourceNames.join(', ')}>{row.sourceNames.join(', ') || '—'}</td>
                                         </tr>
                                     ))}
                                     {result.previewRows.length === 0 && (
