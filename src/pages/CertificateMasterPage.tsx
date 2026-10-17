@@ -165,6 +165,10 @@ export default function CertificateMasterPage() {
     const [error, setError] = React.useState('');
     const [busy, setBusy] = React.useState(false);
     const [progress, setProgress] = React.useState('');
+    const [progressFile, setProgressFile] = React.useState('');
+    const [progressCount, setProgressCount] = React.useState(0);
+    const [progressPercent, setProgressPercent] = React.useState(0);
+    const [progressStage, setProgressStage] = React.useState<'read' | 'match' | 'prepare'>('read');
     const [editingCell, setEditingCell] = React.useState<{ rowNumber: number; field: CertificateField } | null>(null);
     const [editDraft, setEditDraft] = React.useState('');
     const [storageReady, setStorageReady] = React.useState(false);
@@ -405,6 +409,10 @@ export default function CertificateMasterPage() {
         setError('');
         setWarnings([]);
         setProgress('Membaca MASTER...');
+        setProgressFile(masterFile.name);
+        setProgressCount(0);
+        setProgressPercent(3);
+        setProgressStage('read');
         try {
             // Re-read the original file so repeated runs never reuse a previous preview's edits.
             const output = XLSX.read(await masterFile.arrayBuffer(), {
@@ -412,12 +420,17 @@ export default function CertificateMasterPage() {
                 cellDates: true,
                 cellStyles: true,
             });
+            setProgressPercent(8);
+            setProgressFile('');
             const records = [];
             const nextWarnings: string[] = [];
 
             for (let index = 0; index < sourceFiles.length; index += 1) {
                 const file = sourceFiles[index];
-                setProgress(`Membaca laporan ${index + 1} dari ${sourceFiles.length}: ${file.name}`);
+                setProgress(`Membaca laporan ${index + 1} dari ${sourceFiles.length}`);
+                setProgressFile(file.name);
+                setProgressCount(index);
+                setProgressPercent(Math.round(8 + (index / sourceFiles.length) * 82));
                 try {
                     const sourceWorkbook = XLSX.read(await file.arrayBuffer(), {
                         type: 'array',
@@ -433,21 +446,31 @@ export default function CertificateMasterPage() {
                 } catch (cause) {
                     nextWarnings.push(`${file.name}: gagal dibaca (${(cause as Error).message}).`);
                 }
+                setProgressCount(index + 1);
+                setProgressPercent(Math.round(8 + ((index + 1) / sourceFiles.length) * 82));
             }
 
+            setProgressStage('match');
             setProgress('Mencocokkan No. Label dan Nama Alat...');
+            setProgressFile('');
+            setProgressPercent(93);
+            await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
             const fillResult = fillMasterWorkbook(output, targetSheet, records);
+            setProgressStage('prepare');
+            setProgressPercent(98);
             setOutputWorkbook(output);
             setResult(fillResult);
             setWarnings(nextWarnings);
             if (records.length === 0) {
                 setError('Belum ada data laporan yang berhasil dibaca. Cek nama sheet dan isi file sumber.');
             }
+            setProgressPercent(100);
         } catch (cause) {
             setError((cause as Error).message || 'Proses gagal dijalankan.');
         } finally {
             setBusy(false);
             setProgress('');
+            setProgressFile('');
         }
     }, [masterFile, masterWorkbook, targetSheet, sourceFiles]);
 
@@ -681,9 +704,6 @@ export default function CertificateMasterPage() {
                         Unduh MASTER terisi
                     </Button>
                 )}
-                {busy && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400" role="status">{progress}</p>
-                )}
                 <p className={`text-xs ${storageStatus === 'error' ? 'text-rose-700 dark:text-rose-300' : 'text-gray-500 dark:text-gray-400'}`} role="status" aria-live="polite">
                     {!storageReady || storageStatus === 'checking'
                         ? 'Memeriksa simpanan lokal…'
@@ -696,6 +716,71 @@ export default function CertificateMasterPage() {
                                     : 'Autosave aktif di browser ini.'}
                 </p>
             </div>
+
+            {busy && (
+                <Card className="relative mt-4 overflow-hidden border-teal-200 bg-gradient-to-r from-white via-teal-50/80 to-sky-50 dark:border-teal-900/70 dark:from-slate-900 dark:via-teal-950/30 dark:to-slate-900">
+                    <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-teal-400/10 blur-3xl" />
+                    <CardContent className="relative">
+                        <div className="flex items-center gap-4">
+                            <div className="relative grid h-14 w-14 shrink-0 place-items-center">
+                                <div className="absolute inset-0 animate-spin rounded-full border-[3px] border-teal-200/70 border-t-teal-600 dark:border-teal-900 dark:border-t-teal-300" />
+                                <svg className="h-5 w-5 text-teal-700 dark:text-teal-300" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M4 7.5h6l2 2H20v8.75A1.75 1.75 0 0 1 18.25 20h-12.5A1.75 1.75 0 0 1 4 18.25V7.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                                    <path d="M8 14h8M8 16.75h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                                </svg>
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-sm font-bold text-gray-900 dark:text-white">Lagi mencocokkan data</h2>
+                                            <span className="relative flex h-2 w-2">
+                                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-60" />
+                                                <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-600 dark:bg-teal-300" />
+                                            </span>
+                                        </div>
+                                        <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-300">{progress}</p>
+                                    </div>
+                                    <span className="text-xl font-extrabold tabular-nums text-teal-700 dark:text-teal-300">{progressPercent}%</span>
+                                </div>
+
+                                {progressFile && (
+                                    <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400" title={progressFile}>
+                                        File: <span className="font-medium text-gray-700 dark:text-gray-200">{progressFile}</span>
+                                    </p>
+                                )}
+
+                                <div
+                                    className="mt-3 h-2 overflow-hidden rounded-full bg-teal-100 dark:bg-slate-700"
+                                    role="progressbar"
+                                    aria-label="Kemajuan proses pencocokan"
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-valuenow={progressPercent}
+                                >
+                                    <div
+                                        className="relative h-full rounded-full bg-gradient-to-r from-cyan-500 via-teal-500 to-blue-600 transition-[width] duration-500 ease-out"
+                                        style={{ width: `${progressPercent}%` }}
+                                    >
+                                        <span className="absolute inset-0 animate-pulse bg-white/25" />
+                                    </div>
+                                </div>
+                                <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] font-medium">
+                                    <span className={`inline-flex items-center gap-1.5 ${progressStage === 'read' ? 'text-teal-800 dark:text-teal-200' : 'text-emerald-700 dark:text-emerald-300'}`}>
+                                        <span className={`h-1.5 w-1.5 rounded-full ${progressStage === 'read' ? 'animate-pulse bg-teal-600' : 'bg-emerald-500'}`} />
+                                        Baca file LK{progressStage === 'read' ? ` · ${progressCount}/${sourceFiles.length}` : ' · selesai'}
+                                    </span>
+                                    <span className={`inline-flex items-center gap-1.5 ${progressStage === 'read' ? 'text-gray-400 dark:text-gray-500' : 'text-teal-800 dark:text-teal-200'}`}>
+                                        <span className={`h-1.5 w-1.5 rounded-full ${progressStage === 'match' ? 'animate-pulse bg-teal-600' : progressStage === 'prepare' ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-600'}`} />
+                                        Cocokkan No. Label + Nama Alat
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {error && (
                 <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200" role="alert">
@@ -732,6 +817,7 @@ export default function CertificateMasterPage() {
                         <div className="border-b border-gray-100 px-5 py-4 dark:border-slate-800">
                             <h2 className="font-bold text-gray-900 dark:text-white">Pratinjau pengisian</h2>
                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Kalau nilai beda, pilih <strong>MASTER benar</strong> untuk mempertahankan MASTER atau <strong>Pakai LK</strong> untuk menggantinya. Edit nilai langsung dengan klik sel; hasil yang sudah dicek akan berwarna hijau. Tarik batas kanan judul kolom untuk mengubah lebarnya; ukuran tersimpan di browser.</p>
+                            <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400"><strong>MASTER</strong> adalah nilai pada tabel; <strong>LK</strong> adalah nilai dari laporan hasil di kotak abu-abu.</p>
                         </div>
                         <div className="max-h-[95vh] overflow-auto">
                             <table ref={previewTableRef} className="table-fixed w-full text-left text-xs" style={{ minWidth: `${totalColumnWidth}px` }}>
@@ -760,6 +846,9 @@ export default function CertificateMasterPage() {
                                             <td className="px-3 py-2 text-gray-800 dark:text-gray-200">{row.equipmentName}</td>
                                             {previewFieldColumns.map((column) => (
                                                 <td key={column.field} className="overflow-hidden px-2 py-2 text-gray-700 dark:text-gray-300">
+                                                    {row.mismatches.includes(column.field) && (
+                                                        <span className="mb-1 block text-[9px] font-bold tracking-wide text-gray-500 dark:text-gray-400">MASTER</span>
+                                                    )}
                                                     {selectedLayout?.columns[column.field] !== undefined ? (
                                                         editingCell?.rowNumber === row.rowNumber && editingCell.field === column.field ? (
                                                             <textarea
@@ -799,10 +888,13 @@ export default function CertificateMasterPage() {
                                                         <span className="px-1.5 py-1 text-gray-400">—</span>
                                                     )}
                                                     {row.mismatches.includes(column.field) && (
-                                                        <div className="mt-1 space-y-1 px-1">
-                                                            <span className={`block break-words text-[11px] ${row.masterConfirmedFields.includes(column.field) ? 'text-gray-500 dark:text-gray-400' : 'text-rose-700 dark:text-rose-300'}`}>
-                                                                LK: {row.sourceValues[column.field]}
-                                                            </span>
+                                                        <div className="mt-1 space-y-1 rounded-md border border-gray-200 bg-gray-50 p-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                                                            <div className="flex items-start gap-1.5">
+                                                                <span className="shrink-0 text-[9px] font-bold tracking-wide text-gray-500 dark:text-gray-400">LK</span>
+                                                                <span className="break-words text-[11px] text-gray-700 dark:text-gray-200">
+                                                                    {row.sourceValues[column.field]}
+                                                                </span>
+                                                            </div>
                                                             {row.masterConfirmedFields.includes(column.field) ? (
                                                                 <span className="block text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">MASTER dikonfirmasi benar</span>
                                                             ) : (
