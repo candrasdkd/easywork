@@ -11,6 +11,7 @@ import PurchaseOrderPdfPage from './pages/PurchaseOrderPdfPage'
 import EquipmentCheckPage from './pages/EquipmentCheckPage'
 import ReferenceToolsPage from './pages/ReferenceToolsPage'
 import CertificateMasterPage from './pages/CertificateMasterPage'
+import CertificatePrintPage from './pages/CertificatePrintPage'
 
 export default function AppRoutes() {
     return (
@@ -29,6 +30,7 @@ export default function AppRoutes() {
                     <Route path="/cek-alat" element={<EquipmentCheckPage />} />
                     <Route path="/referensi-alat" element={<ReferenceToolsPage />} />
                     <Route path="/isi-master-sertifikat" element={<CertificateMasterPage />} />
+                    <Route path="/cetak-sertifikat" element={<CertificatePrintPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     {/* <Route path="/category-orders" element={<CategoryOrder />} /> */}
                 </Route>
