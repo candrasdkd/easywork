@@ -23,6 +23,7 @@ export type CertificateField =
 export interface CertificateRecord {
     id: string;
     number: string;
+    rekapRow: number;
     fields: Record<CertificateField, string>;
 }
 
@@ -87,11 +88,13 @@ export function parseCertificateWorkbook(workbook: XLSX.WorkBook): CertificateWo
 
     const rekap = workbook.Sheets[rekapName];
     const certificate = workbook.Sheets[certificateName];
+    const rekapRange = rekap['!ref'] ? XLSX.utils.decode_range(rekap['!ref']) : XLSX.utils.decode_range('A1');
     const rows = XLSX.utils.sheet_to_json<unknown[]>(rekap, {
         header: 1,
         raw: false,
         defval: '',
-        blankrows: false,
+        blankrows: true,
+        range: { s: { r: 0, c: 0 }, e: rekapRange.e },
     });
     const headerRowIndex = rows.findIndex((row) => {
         const headers = row.map(normalizeHeader);
@@ -124,7 +127,7 @@ export function parseCertificateWorkbook(workbook: XLSX.WorkBook): CertificateWo
             })) as Record<CertificateField, string>;
             const number = numberIndex >= 0 ? String(row[numberIndex] ?? '').trim() : String(rowOffset + 1);
             const id = `${rowOffset}-${number || fields.label || equipment}`;
-            return { id, number: number || String(rowOffset + 1), fields };
+            return { id, number: number || String(rowOffset + 1), rekapRow: headerRowIndex + rowOffset + 2, fields };
         })
         .filter((record): record is CertificateRecord => record !== null);
 

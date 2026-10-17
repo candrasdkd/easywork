@@ -4,8 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/dev.mjs",
-    "dev:vite": "vite",
+    "dev": "vite",
     "build": "tsc -b && vite build",
     "pwa": "workbox generateSW workbox-config.js",
     "lint": "eslint .",
