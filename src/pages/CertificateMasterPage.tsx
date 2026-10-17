@@ -5,14 +5,15 @@ import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { filterSourceReportFiles } from '../lib/certificateMasterFiles';
 import {
-    certificateFieldValuesMatch,
     fillMasterWorkbook,
     findMasterLayout,
     isEmptyCertificateValue,
+    previewFieldValuesMatch,
     readSourceReportWorkbook,
     suggestMasterSheet,
     type CertificateField,
     type CertificateFillResult,
+    type PreviewField,
 } from '../lib/certificateMaster';
 import {
     loadCertificateFile,
@@ -38,7 +39,9 @@ const previewFieldColumns: Array<{ field: CertificateField; label: string }> = [
     { field: 'performedDate', label: 'Tanggal Pelaksanaan' },
 ];
 
-const previewFieldLabels: Record<CertificateField, string> = {
+const previewFieldLabels: Record<PreviewField, string> = {
+    label: 'No. Label',
+    equipmentName: 'Nama Alat',
     capacity: 'Kapasitas',
     accuracy: 'Tingkat Ketelitian',
     method: 'MK',
@@ -169,7 +172,7 @@ export default function CertificateMasterPage() {
     const [progressCount, setProgressCount] = React.useState(0);
     const [progressPercent, setProgressPercent] = React.useState(0);
     const [progressStage, setProgressStage] = React.useState<'read' | 'match' | 'prepare'>('read');
-    const [editingCell, setEditingCell] = React.useState<{ rowNumber: number; field: CertificateField } | null>(null);
+    const [editingCell, setEditingCell] = React.useState<{ rowNumber: number; field: PreviewField } | null>(null);
     const [editDraft, setEditDraft] = React.useState('');
     const [storageReady, setStorageReady] = React.useState(false);
     const [storageStatus, setStorageStatus] = React.useState<'checking' | 'saving' | 'saved' | 'empty' | 'error'>('checking');
@@ -271,13 +274,70 @@ export default function CertificateMasterPage() {
                         restoredSourceFiles.push(file);
                     }
 
+                    let restoredOutputWorkbook = session.outputWorkbook as XLSX.WorkBook | null;
+                    let restoredResult = session.result ? {
+                        ...session.result,
+                        identityOnlyRows: session.result.identityOnlyRows ?? 0,
+                        previewRows: session.result.previewRows.map((row) => ({
+                            ...row,
+                            sourceLabel: row.sourceLabel ?? '',
+                            sourceEquipmentName: row.sourceEquipmentName ?? '',
+                            matchedOn: row.matchedOn ?? [],
+                            matchedFields: row.matchedFields ?? [],
+                            mismatches: row.mismatches ?? [],
+                            editedFields: row.editedFields ?? [],
+                            masterConfirmedFields: row.masterConfirmedFields ?? [],
+                        })),
+                    } : null;
+                    const savedTargetSheet = session.targetSheet || (restoredMasterWorkbook ? suggestMasterSheet(restoredMasterWorkbook) : '');
+                    const hasLegacyMatchResult = Boolean(session.result?.previewRows.some((row) => !Array.isArray((row as { matchedOn?: unknown }).matchedOn)));
+
+                    // Refresh legacy saved previews with the new identity matching while keeping
+                    // the user's edited workbook values and review decisions intact.
+                    if (hasLegacyMatchResult && restoredOutputWorkbook && savedTargetSheet && restoredSourceFiles.length > 0) {
+                        try {
+                            const records = [];
+                            for (let index = 0; index < restoredSourceFiles.length; index += 1) {
+                                const file = restoredSourceFiles[index];
+                                const sourceWorkbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+                                records.push(...readSourceReportWorkbook(
+                                    sourceWorkbook,
+                                    file.name,
+                                    `${index}\u0000${sourceFileKey(file)}`,
+                                ));
+                            }
+                            if (records.length > 0) {
+                                const previousRows = new Map((session.result?.previewRows ?? []).map((row) => [row.rowNumber, row]));
+                                const refreshed = fillMasterWorkbook(restoredOutputWorkbook, savedTargetSheet, records);
+                                const previewRows = refreshed.previewRows.map((row) => {
+                                    const previous = previousRows.get(row.rowNumber);
+                                    const masterConfirmedFields = (previous?.masterConfirmedFields ?? [])
+                                        .filter((field) => row.mismatches.includes(field));
+                                    return {
+                                        ...row,
+                                        editedFields: previous?.editedFields ?? [],
+                                        masterConfirmedFields,
+                                    };
+                                });
+                                restoredResult = {
+                                    ...refreshed,
+                                    previewRows,
+                                    unresolvedMismatchCells: previewRows.reduce((count, row) => count
+                                        + row.mismatches.filter((field) => !row.masterConfirmedFields.includes(field)).length, 0),
+                                };
+                            }
+                        } catch {
+                            // Keep the last saved preview if one of its files cannot be refreshed.
+                        }
+                    }
+
                     if (!cancelled) {
                         setMasterFile(restoredMasterFile);
                         setMasterWorkbook(restoredMasterWorkbook);
-                        setTargetSheet(session.targetSheet || (restoredMasterWorkbook ? suggestMasterSheet(restoredMasterWorkbook) : ''));
+                        setTargetSheet(savedTargetSheet);
                         setSourceFiles(restoredSourceFiles);
-                        setResult(session.result);
-                        setOutputWorkbook(session.outputWorkbook as XLSX.WorkBook | null);
+                        setResult(restoredResult);
+                        setOutputWorkbook(restoredOutputWorkbook);
                         setWarnings(session.warnings ?? []);
                         setRestoredFromStorage(Boolean(session.masterFileId || session.sourceFileIds.length || session.result));
                         setStorageStatus('saved');
@@ -451,7 +511,7 @@ export default function CertificateMasterPage() {
             }
 
             setProgressStage('match');
-            setProgress('Mencocokkan No. Label dan Nama Alat...');
+            setProgress('Mencocokkan identitas alat dengan file LK...');
             setProgressFile('');
             setProgressPercent(93);
             await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
@@ -474,7 +534,7 @@ export default function CertificateMasterPage() {
         }
     }, [masterFile, masterWorkbook, targetSheet, sourceFiles]);
 
-    const handleFieldEdit = React.useCallback((rowNumber: number, field: CertificateField, value: string) => {
+    const handleFieldEdit = React.useCallback((rowNumber: number, field: PreviewField, value: string) => {
         if (!outputWorkbook || !targetSheet) return;
         const layout = findMasterLayout(outputWorkbook, targetSheet);
         const column = layout?.columns[field];
@@ -499,11 +559,16 @@ export default function CertificateMasterPage() {
             const row = current.previewRows.find((candidate) => candidate.rowNumber === rowNumber);
             if (!row) return current;
 
-            const sourceValue = row.sourceValues[field];
+            const sourceValue = field === 'label'
+                ? row.sourceLabel ?? ''
+                : field === 'equipmentName'
+                    ? row.sourceEquipmentName ?? ''
+                    : row.sourceValues[field];
             const hasSourceValue = !isEmptyCertificateValue(sourceValue);
-            const canCompare = hasSourceValue && !row.conflicts.includes(field);
+            const hasConflict = field !== 'label' && field !== 'equipmentName' && row.conflicts.includes(field);
+            const canCompare = hasSourceValue && !hasConflict;
             const isEmpty = isEmptyCertificateValue(value);
-            const matchesSource = canCompare && !isEmpty && certificateFieldValuesMatch(field, value, sourceValue);
+            const matchesSource = canCompare && !isEmpty && previewFieldValuesMatch(field, value, sourceValue);
             const differsFromSource = canCompare && !isEmpty && !matchesSource;
             const wasMatched = row.matchedFields.includes(field);
             const wasMismatched = row.mismatches.includes(field);
@@ -533,7 +598,7 @@ export default function CertificateMasterPage() {
         });
     }, [outputWorkbook, targetSheet]);
 
-    const confirmMasterValue = React.useCallback((rowNumber: number, field: CertificateField) => {
+    const confirmMasterValue = React.useCallback((rowNumber: number, field: PreviewField) => {
         setResult((current) => {
             if (!current) return current;
             const row = current.previewRows.find((candidate) => candidate.rowNumber === rowNumber);
@@ -550,7 +615,7 @@ export default function CertificateMasterPage() {
         });
     }, []);
 
-    const startFieldEdit = React.useCallback((rowNumber: number, field: CertificateField, value: string) => {
+    const startFieldEdit = React.useCallback((rowNumber: number, field: PreviewField, value: string) => {
         setEditingCell({ rowNumber, field });
         setEditDraft(value);
     }, []);
@@ -575,6 +640,97 @@ export default function CertificateMasterPage() {
         ? findMasterLayout(masterWorkbook, targetSheet)
         : null;
 
+    const renderPreviewCellContent = (row: CertificateFillResult['previewRows'][number], field: PreviewField, label: string) => {
+        const value = row[field] ?? '';
+        const sourceValue = field === 'label'
+            ? row.sourceLabel ?? ''
+            : field === 'equipmentName'
+                ? row.sourceEquipmentName ?? ''
+                : row.sourceValues[field];
+        const hasMismatch = row.mismatches.includes(field);
+        const isConfirmed = row.masterConfirmedFields.includes(field);
+        const isEditedAndMatched = row.editedFields.includes(field) && row.matchedFields.includes(field);
+        const isEditing = editingCell?.rowNumber === row.rowNumber && editingCell.field === field;
+        const hasColumn = selectedLayout?.columns[field] !== undefined;
+        const baseCellClass = hasMismatch && !isConfirmed
+            ? 'bg-rose-50 text-rose-800 dark:bg-rose-950/30 dark:text-rose-300'
+            : isConfirmed || isEditedAndMatched
+                ? 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:ring-emerald-800'
+                : 'text-gray-700 dark:text-gray-300';
+        const hasConflict = field !== 'label' && field !== 'equipmentName' && row.conflicts.includes(field);
+
+        return (
+            <>
+                {hasMismatch && <span className="mb-1 block text-[9px] font-bold tracking-wide text-gray-500 dark:text-gray-400">MASTER</span>}
+                {!hasColumn ? (
+                    <span className="px-1.5 py-1 text-gray-400">{value || '—'}</span>
+                ) : isEditing ? (
+                    <textarea
+                        aria-label={`Edit ${label}, baris ${row.rowNumber}`}
+                        autoFocus
+                        rows={Math.min(10, Math.max(2, Math.ceil(editDraft.length / 14)))}
+                        value={editDraft}
+                        onChange={(event) => setEditDraft(event.target.value)}
+                        onBlur={saveFieldEdit}
+                        onFocus={(event) => event.currentTarget.select()}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                                event.preventDefault();
+                                saveFieldEdit();
+                            } else if (event.key === 'Escape') {
+                                cancelFieldEdit();
+                            }
+                        }}
+                        className={`block w-full min-w-0 resize-y rounded-md border px-2 py-1.5 text-xs leading-5 outline-none ring-2 focus:ring-teal-500/20 ${isConfirmed || isEditedAndMatched ? 'border-emerald-500 bg-emerald-50 text-emerald-900 ring-emerald-500/20 dark:bg-emerald-950/30 dark:text-emerald-100' : 'border-teal-500 bg-white text-gray-900 ring-teal-500/20 dark:bg-slate-900 dark:text-gray-100'}`}
+                    />
+                ) : (
+                    <button
+                        type="button"
+                        title={value || `Ubah ${label}`}
+                        aria-label={`Ubah ${label} baris ${row.rowNumber}`}
+                        disabled={busy}
+                        onClick={() => startFieldEdit(row.rowNumber, field, value)}
+                        className={`group block w-full min-w-0 rounded-md px-1.5 py-1 text-left transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500/30 disabled:cursor-not-allowed dark:hover:bg-slate-800 ${baseCellClass}`}
+                    >
+                        <span className="break-words" style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflow: 'hidden' }}>{value || '—'}</span>
+                    </button>
+                )}
+                {hasMismatch && (
+                    <div className="mt-1 space-y-1 rounded-md border border-gray-200 bg-gray-50 p-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                        <div className="flex items-start gap-1.5">
+                            <span className="shrink-0 text-[9px] font-bold tracking-wide text-gray-500 dark:text-gray-400">LK</span>
+                            <span className="break-words text-[11px] text-gray-700 dark:text-gray-200">{sourceValue}</span>
+                        </div>
+                        {isConfirmed ? (
+                            <span className="block text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">Perbedaan ditinjau · MASTER dipertahankan</span>
+                        ) : (
+                            <div className="flex flex-wrap gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => confirmMasterValue(row.rowNumber, field)}
+                                    className="whitespace-nowrap rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                >
+                                    ✓ Pertahankan MASTER
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleFieldEdit(row.rowNumber, field, sourceValue)}
+                                    className="whitespace-nowrap rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-100 dark:border-slate-600 dark:bg-slate-900 dark:text-gray-200"
+                                >
+                                    Pakai LK
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+                {hasConflict && <span className="ml-1 block text-[11px] text-amber-700 dark:text-amber-300">Sumber bentrok</span>}
+                {!hasMismatch && isEmptyCertificateValue(value) && !isEmptyCertificateValue(sourceValue) && !hasConflict && (
+                    <span className="ml-1 block break-words text-[11px] text-gray-500 dark:text-gray-400">LK {sourceValue}</span>
+                )}
+            </>
+        );
+    };
+
     return (
         <PageContainer
             title="Isi Master Sertifikat"
@@ -584,7 +740,7 @@ export default function CertificateMasterPage() {
             ]}
         >
             <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-sm text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100">
-                Pilih file MASTER dan file laporan. Sistem mencocokkan pasangan <strong>No. Label + Nama Alat</strong> terlebih dahulu. Jika tidak ditemukan dan No. Label hanya merujuk ke satu Nama Alat, sistem mencoba mencocokkan berdasarkan <strong>No. Label saja</strong>. Setelah cocok, sistem mengisi kolom yang masih kosong dan membandingkan kolom MASTER yang sudah berisi dengan LK. Perbedaan ditandai untuk dicek; nilai MASTER tetap dipertahankan.
+                Sistem memakai <strong>No. Label, Nama Alat, Merk, Tipe, dan No. Seri</strong> untuk mencari LK yang paling sesuai. Kalau beberapa file punya No. Label sama, data identitas lain membantu membedakannya. Jika masih ada beberapa kandidat yang sama kuat, sistem menandainya ambigu dan tidak mengisi otomatis. Semua perbedaan di lima kolom identitas ditampilkan untuk ditinjau bersama kolom lainnya.
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
@@ -625,7 +781,8 @@ export default function CertificateMasterPage() {
                                 {selectedLayout && (
                                     <div className="space-y-1">
                                         <p className="text-xs text-emerald-700 dark:text-emerald-400">Header tabel terdeteksi pada baris {selectedLayout.headerRow + 1}.</p>
-                                        {selectedLayout.roomColumnInferred && <p className="text-xs text-amber-700 dark:text-amber-400">Kolom ruangan dikenali dari posisinya di samping Tanggal Terbit.</p>}
+                                        {selectedLayout.roomColumnInferred && <p className="text-xs text-amber-700 dark:text-amber-400">Header Ruangan tidak dikenali; sistem memakai kolom tepat di kanan Tanggal Terbit. Kolom kiri seperti Hasil tidak dipakai.</p>}
+                                        {selectedLayout.columns.room === undefined && <p className="text-xs text-amber-700 dark:text-amber-400">Header Ruangan belum dikenali dan tidak ada kolom yang bisa dipakai di kanan Tanggal Terbit.</p>}
                                     </div>
                                 )}
                             </div>
@@ -802,7 +959,8 @@ export default function CertificateMasterPage() {
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
                         <Card><CardContent className="py-4"><p className="text-2xl font-bold text-gray-900 dark:text-white">{result.previewRows.length}</p><p className="text-xs text-gray-500 dark:text-gray-400">Baris alat di MASTER</p></CardContent></Card>
                         <Card><CardContent className="py-4"><p className="text-2xl font-bold text-emerald-600">{result.matchedRows}</p><p className="text-xs text-gray-500 dark:text-gray-400">Cocok No. Label + Nama Alat</p></CardContent></Card>
-                        <Card><CardContent className="py-4"><p className="text-2xl font-bold text-amber-600">{result.labelOnlyRows}</p><p className="text-xs text-gray-500 dark:text-gray-400">Cocok No. Label saja</p></CardContent></Card>
+                        <Card><CardContent className="py-4"><p className="text-2xl font-bold text-amber-600">{result.labelOnlyRows}</p><p className="text-xs text-gray-500 dark:text-gray-400">No. Label cocok, Nama Alat berbeda</p></CardContent></Card>
+                        <Card><CardContent className="py-4"><p className="text-2xl font-bold text-blue-600">{result.identityOnlyRows ?? 0}</p><p className="text-xs text-gray-500 dark:text-gray-400">Cocok via identitas lain</p></CardContent></Card>
                         <Card><CardContent className="py-4"><p className="text-2xl font-bold text-rose-600">{result.ambiguousLabelRows}</p><p className="text-xs text-gray-500 dark:text-gray-400">No. Label ambigu</p></CardContent></Card>
                         <Card><CardContent className="py-4"><p className="text-2xl font-bold text-rose-600">{result.ambiguousSourceRows}</p><p className="text-xs text-gray-500 dark:text-gray-400">Beberapa file cocok</p></CardContent></Card>
                         <Card><CardContent className="py-4"><p className="text-2xl font-bold text-amber-600">{result.reusedSourceRows}</p><p className="text-xs text-gray-500 dark:text-gray-400">File sumber sudah dipakai</p></CardContent></Card>
@@ -816,7 +974,7 @@ export default function CertificateMasterPage() {
                     <Card>
                         <div className="border-b border-gray-100 px-5 py-4 dark:border-slate-800">
                             <h2 className="font-bold text-gray-900 dark:text-white">Pratinjau pengisian</h2>
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Kalau nilai beda, pilih <strong>MASTER benar</strong> untuk mempertahankan MASTER atau <strong>Pakai LK</strong> untuk menggantinya. Edit nilai langsung dengan klik sel; hasil yang sudah dicek akan berwarna hijau. Tarik batas kanan judul kolom untuk mengubah lebarnya; ukuran tersimpan di browser.</p>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Pencocokan memakai No. Label, Nama Alat, Merk, Tipe, dan No. Seri. Kalau nilai beda, pilih <strong>Pertahankan MASTER</strong> atau <strong>Pakai LK</strong>. Edit nilai langsung dengan klik sel; hasil yang sudah dicek akan berwarna hijau. Tarik batas kanan judul kolom untuk mengubah lebarnya; ukuran tersimpan di browser.</p>
                             <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400"><strong>MASTER</strong> adalah nilai pada tabel; <strong>LK</strong> adalah nilai dari laporan hasil di kotak abu-abu.</p>
                         </div>
                         <div className="max-h-[95vh] overflow-auto">
@@ -842,89 +1000,11 @@ export default function CertificateMasterPage() {
                                     {result.previewRows.map((row) => (
                                         <tr key={`${row.rowNumber}-${row.label}`} className="border-t border-gray-100 align-top dark:border-slate-800">
                                             <td className="px-3 py-2 text-gray-500">{row.rowNumber}</td>
-                                            <td className="px-3 py-2 font-medium text-gray-800 dark:text-gray-200">{row.label}</td>
-                                            <td className="px-3 py-2 text-gray-800 dark:text-gray-200">{row.equipmentName}</td>
+                                            <td className="overflow-hidden px-2 py-2 font-medium text-gray-800 dark:text-gray-200">{renderPreviewCellContent(row, 'label', 'No. Label')}</td>
+                                            <td className="overflow-hidden px-2 py-2 text-gray-800 dark:text-gray-200">{renderPreviewCellContent(row, 'equipmentName', 'Nama Alat')}</td>
                                             {previewFieldColumns.map((column) => (
                                                 <td key={column.field} className="overflow-hidden px-2 py-2 text-gray-700 dark:text-gray-300">
-                                                    {row.mismatches.includes(column.field) && (
-                                                        <span className="mb-1 block text-[9px] font-bold tracking-wide text-gray-500 dark:text-gray-400">MASTER</span>
-                                                    )}
-                                                    {selectedLayout?.columns[column.field] !== undefined ? (
-                                                        editingCell?.rowNumber === row.rowNumber && editingCell.field === column.field ? (
-                                                            <textarea
-                                                                aria-label={`Edit ${column.label}, baris ${row.rowNumber}`}
-                                                                autoFocus
-                                                                rows={Math.min(10, Math.max(2, Math.ceil(editDraft.length / 14)))}
-                                                                value={editDraft}
-                                                                onChange={(event) => setEditDraft(event.target.value)}
-                                                                onBlur={saveFieldEdit}
-                                                                onFocus={(event) => event.currentTarget.select()}
-                                                                onKeyDown={(event) => {
-                                                                    if (event.key === 'Enter') {
-                                                                        event.preventDefault();
-                                                                        saveFieldEdit();
-                                                                    } else if (event.key === 'Escape') {
-                                                                        cancelFieldEdit();
-                                                                    }
-                                                                }}
-                                                                className={`block w-full min-w-0 resize-y rounded-md border px-2 py-1.5 text-xs leading-5 outline-none ring-2 focus:ring-teal-500/20 ${row.masterConfirmedFields.includes(column.field) || row.editedFields.includes(column.field) && row.matchedFields.includes(column.field) ? 'border-emerald-500 bg-emerald-50 text-emerald-900 ring-emerald-500/20 dark:bg-emerald-950/30 dark:text-emerald-100' : 'border-teal-500 bg-white text-gray-900 ring-teal-500/20 dark:bg-slate-900 dark:text-gray-100'}`}
-                                                            />
-                                                        ) : (
-                                                            <button
-                                                                type="button"
-                                                                title={row[column.field] || `Ubah ${column.label}`}
-                                                                aria-label={`Ubah ${column.label} baris ${row.rowNumber}`}
-                                                                disabled={busy}
-                                                                onClick={() => startFieldEdit(row.rowNumber, column.field, row[column.field])}
-                                                                className={`group block w-full min-w-0 rounded-md px-1.5 py-1 text-left transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500/30 disabled:cursor-not-allowed dark:hover:bg-slate-800 ${row.mismatches.includes(column.field) && !row.masterConfirmedFields.includes(column.field) ? 'bg-rose-50 text-rose-800 dark:bg-rose-950/30 dark:text-rose-300' : row.masterConfirmedFields.includes(column.field) || row.editedFields.includes(column.field) && row.matchedFields.includes(column.field) ? 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:ring-emerald-800' : 'text-gray-700 dark:text-gray-300'}`}
-                                                            >
-                                                                <span
-                                                                    className="break-words"
-                                                                    style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflow: 'hidden' }}
-                                                                >{row[column.field] || '—'}</span>
-                                                            </button>
-                                                        )
-                                                    ) : (
-                                                        <span className="px-1.5 py-1 text-gray-400">—</span>
-                                                    )}
-                                                    {row.mismatches.includes(column.field) && (
-                                                        <div className="mt-1 space-y-1 rounded-md border border-gray-200 bg-gray-50 p-1.5 dark:border-slate-700 dark:bg-slate-800/60">
-                                                            <div className="flex items-start gap-1.5">
-                                                                <span className="shrink-0 text-[9px] font-bold tracking-wide text-gray-500 dark:text-gray-400">LK</span>
-                                                                <span className="break-words text-[11px] text-gray-700 dark:text-gray-200">
-                                                                    {row.sourceValues[column.field]}
-                                                                </span>
-                                                            </div>
-                                                            {row.masterConfirmedFields.includes(column.field) ? (
-                                                                <span className="block text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">MASTER dikonfirmasi benar</span>
-                                                            ) : (
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => confirmMasterValue(row.rowNumber, column.field)}
-                                                                        className="whitespace-nowrap rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
-                                                                    >
-                                                                        ✓ MASTER benar
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleFieldEdit(row.rowNumber, column.field, row.sourceValues[column.field])}
-                                                                        className="whitespace-nowrap rounded border border-rose-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:bg-slate-900 dark:text-rose-300"
-                                                                    >
-                                                                        Pakai LK
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                    {row.conflicts.includes(column.field) && (
-                                                        <span className="ml-1 block text-[11px] text-amber-700 dark:text-amber-300">Sumber bentrok</span>
-                                                    )}
-                                                    {isEmptyCertificateValue(row[column.field])
-                                                        && !isEmptyCertificateValue(row.sourceValues[column.field])
-                                                        && !row.conflicts.includes(column.field)
-                                                        && !row.mismatches.includes(column.field)
-                                                        && <span className="ml-1 block break-words text-[11px] text-gray-500 dark:text-gray-400">LK {row.sourceValues[column.field]}</span>}
+                                                    {renderPreviewCellContent(row, column.field, column.label)}
                                                 </td>
                                             ))}
                                             <td className="px-3 py-2">
@@ -932,10 +1012,10 @@ export default function CertificateMasterPage() {
                                                     <span className={`inline-flex rounded-full px-2 py-1 font-semibold ${row.status === 'Tidak ditemukan' || row.ambiguousLabelMatch || row.ambiguousSourceMatch || row.sourceAlreadyUsed || row.conflicts.length > 0 || row.matchedByLabelOnly ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300' : row.filledCount > 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300'}`}>
                                                         {row.status}
                                                     </span>
-                                                    {row.matchedByLabelOnly && (
-                                                        <span className="inline-flex rounded-full bg-amber-100 px-2 py-1 font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
-                                                            Cocok No. Label saja
-                                                        </span>
+                                                    {(row.matchedOn ?? []).length > 0 && (
+                                                        <p className="basis-full text-gray-500 dark:text-gray-400">
+                                                            Dasar pencocokan awal: {(row.matchedOn ?? []).map((field) => previewFieldLabels[field]).join(' + ')}
+                                                        </p>
                                                     )}
                                                     {row.ambiguousLabelMatch && (
                                                         <p className="max-w-64 text-amber-800 dark:text-amber-300">
@@ -951,13 +1031,13 @@ export default function CertificateMasterPage() {
                                                         <>
                                                             <span className="inline-flex rounded-full bg-rose-100 px-2 py-1 font-semibold text-rose-800 dark:bg-rose-500/10 dark:text-rose-300">Berbeda dari LK</span>
                                                             <p className="basis-full text-rose-700 dark:text-rose-300">
-                                                                Perlu keputusan: {row.mismatches.filter((field) => !row.masterConfirmedFields.includes(field)).map((field) => previewFieldLabels[field]).join(', ')}
+                                                                Perlu ditinjau: {row.mismatches.filter((field) => !row.masterConfirmedFields.includes(field)).map((field) => previewFieldLabels[field]).join(', ')}
                                                             </p>
                                                         </>
                                                     )}
                                                     {row.masterConfirmedFields.length > 0 && (
                                                         <span className="basis-full text-emerald-700 dark:text-emerald-300">
-                                                            MASTER dikonfirmasi benar: {row.masterConfirmedFields.map((field) => previewFieldLabels[field]).join(', ')}
+                                                            Perbedaan ditinjau · MASTER dipertahankan: {row.masterConfirmedFields.map((field) => previewFieldLabels[field]).join(', ')}
                                                         </span>
                                                     )}
                                                 </div>
