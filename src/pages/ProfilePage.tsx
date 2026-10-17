@@ -266,7 +266,7 @@ export default function ProfilePage() {
                                     </svg>
                                     Informasi
                                 </span>
-                                Nama ini akan muncul sebagai <span className="underline decoration-emerald-500/30 decoration-2 underline-offset-2">Person Responsible</span> secara otomatis di setiap formulir inventaris yang Anda tambahkan.
+                                Nama ini akan muncul sebagai <span className="underline decoration-emerald-500/30 decoration-2 underline-offset-2">Person Responsible</span> secara otomatis di setiap formulir data kalibrasi yang Anda tambahkan.
                             </div>
 
                             <div className="space-y-2">

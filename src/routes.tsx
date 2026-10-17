@@ -2,7 +2,6 @@
 import { Routes, Route, Navigate } from 'react-router'
 import DashboardPage from './pages/DashboardPage'
 import CalibrationListPage from './pages/CalibrationListPage'
-import InventoryListPage from './pages/InventoryListPage'
 import Login from './pages/LoginPage'
 import RequireAuth from './components/RequireAuth'
 import AppShell from './layouts/AppShell'
@@ -24,7 +23,7 @@ export default function AppRoutes() {
                 <Route element={<AppShell />}>
                     <Route path="/" element={<DashboardPage />} />
                     <Route path="/data-inputan" element={<CalibrationListPage />} />
-                    <Route path="/data-inventaris" element={<InventoryListPage />} />
+                    <Route path="/data-inventaris" element={<Navigate to="/" replace />} />
                     <Route path="/mass-import" element={<MassImportPage />} />
                     <Route path="/ekstrak-pesanan-pdf" element={<PurchaseOrderPdfPage />} />
                     <Route path="/cek-alat" element={<EquipmentCheckPage />} />

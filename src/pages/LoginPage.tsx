@@ -118,7 +118,7 @@ export default function Login() {
                         </span>
                     </h1>
                     <p className="text-lg text-slate-400 leading-relaxed font-medium">
-                        Platform andalan untuk memonitor, mengelola inventaris, dan kalibrasi dengan cepat, presisi, dan aman.
+                        Platform andalan untuk memantau dan mengelola data kalibrasi dengan cepat, presisi, dan aman.
                     </p>
 
                     {/* UI Illustration representation (Decorative Mockup elements) */}
