@@ -85,6 +85,7 @@ export interface CertificatePreviewRow {
     matchedFields: CertificateField[];
     mismatches: CertificateField[];
     editedFields: CertificateField[];
+    masterConfirmedFields: CertificateField[];
     sourceValues: CurrentFieldValues;
     matchedByLabelOnly: boolean;
     ambiguousLabelMatch: boolean;
@@ -104,6 +105,7 @@ export interface CertificateFillResult {
     conflictCount: number;
     matchingCells: number;
     mismatchedCells: number;
+    unresolvedMismatchCells: number;
 }
 
 interface SourceFileCandidate {
@@ -830,6 +832,7 @@ export function fillMasterWorkbook(
         conflictCount: 0,
         matchingCells: 0,
         mismatchedCells: 0,
+        unresolvedMismatchCells: 0,
     };
 
     rows.slice(layout.headerRow + 1).forEach((row, offset) => {
@@ -868,6 +871,7 @@ export function fillMasterWorkbook(
         counters.conflictCount += writeResult.conflicts.length;
         counters.matchingCells += writeResult.matchedFields.length;
         counters.mismatchedCells += writeResult.mismatches.length;
+        counters.unresolvedMismatchCells += writeResult.mismatches.length;
 
         const displayedCandidates = candidatesForPreview(match);
         previewRows.push({
@@ -899,6 +903,7 @@ export function fillMasterWorkbook(
             matchedFields: writeResult.matchedFields,
             mismatches: writeResult.mismatches,
             editedFields: [],
+            masterConfirmedFields: [],
             sourceValues: writeResult.sourceValues,
             matchedByLabelOnly: match.kind === 'label-only',
             ambiguousLabelMatch: match.kind === 'ambiguous-label',
