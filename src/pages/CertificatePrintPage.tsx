@@ -1,18 +1,23 @@
 import * as React from 'react';
 import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import PageContainer from '../components/PageContainer';
 import { Button } from '../components/ui/Button';
 import useNotifications from '../hooks/useNotifications/useNotifications';
 import { parseCertificateWorkbook, type CertificateRecord } from '../lib/certificatePrint';
+import { createCombinedCertificatePdf } from '../lib/certificatePdf';
 
 export default function CertificatePrintPage() {
     const notifications = useNotifications();
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const [workbook, setWorkbook] = React.useState<XLSX.WorkBook | null>(null);
     const [records, setRecords] = React.useState<CertificateRecord[]>([]);
     const [fileName, setFileName] = React.useState('');
     const [customPageTotals, setCustomPageTotals] = React.useState<Record<string, string>>({});
     const [search, setSearch] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
+    const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false);
+    const [pdfProgress, setPdfProgress] = React.useState({ completed: 0, total: 0 });
     const [error, setError] = React.useState('');
 
     const normalizedSearch = search.trim().toLocaleLowerCase('id-ID');
@@ -33,6 +38,18 @@ export default function CertificatePrintPage() {
     const validCustomPageOverrides = customPageOverrides.filter((item) => item.pages !== null);
     const invalidCustomPageOverrideCount = customPageOverrides.length - validCustomPageOverrides.length;
     const hasPageSettings = validCustomPageOverrides.length > 0;
+    const pdfProgressPercent = pdfProgress.total > 0
+        ? Math.round((pdfProgress.completed / pdfProgress.total) * 100)
+        : 0;
+    const pdfProgressMessage = pdfProgress.completed === 0
+        ? 'Menyiapkan template dan data alat...'
+        : pdfProgressPercent < 35
+            ? 'Mengisi dan merender sertifikat satu per satu...'
+            : pdfProgressPercent < 85
+                ? 'Menyusun halaman sertifikat ke dalam PDF...'
+                : pdfProgressPercent < 100
+                    ? 'Merapikan halaman terakhir...'
+                    : 'Mengemas PDF dan menyiapkan unduhan...';
 
     const handleFile = async (file?: File) => {
         if (!file) return;
@@ -44,8 +61,14 @@ export default function CertificatePrintPage() {
         setIsLoading(true);
         setError('');
         try {
-            const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
-            const parsed = parseCertificateWorkbook(workbook);
+            const uploadedWorkbook = XLSX.read(await file.arrayBuffer(), {
+                type: 'array',
+                cellDates: true,
+                cellStyles: true,
+                bookFiles: true,
+            });
+            const parsed = parseCertificateWorkbook(uploadedWorkbook);
+            setWorkbook(uploadedWorkbook);
             setRecords(parsed.records);
             setFileName(file.name);
             setCustomPageTotals({});
@@ -56,6 +79,7 @@ export default function CertificatePrintPage() {
             });
         } catch (cause: unknown) {
             const message = cause instanceof Error ? cause.message : 'File Excel tidak dapat dibaca.';
+            setWorkbook(null);
             setRecords([]);
             setFileName('');
             setCustomPageTotals({});
@@ -66,7 +90,7 @@ export default function CertificatePrintPage() {
         }
     };
 
-    const handleCopyPageSettings = async () => {
+    const handleCreatePdf = async () => {
         if (invalidCustomPageOverrideCount > 0) {
             notifications.show('Periksa halaman khusus: isi angka bulat dari 1 sampai 999.', {
                 severity: 'warning',
@@ -74,6 +98,31 @@ export default function CertificatePrintPage() {
             });
             return;
         }
+        if (!workbook) return;
+        setIsGeneratingPdf(true);
+        setPdfProgress({ completed: 0, total: records.length });
+        setError('');
+        try {
+            const customTotals = Object.fromEntries(validCustomPageOverrides.map(({ record, pages }) => [record.id, pages as number]));
+            const pdf = await createCombinedCertificatePdf(workbook, records, customTotals, (completed, total) => {
+                setPdfProgress({ completed, total });
+            });
+            const baseName = fileName.replace(/\.xlsx$/i, '').replace(/[\\/:*?"<>|]/g, '-').trim() || 'Sertifikat';
+            saveAs(pdf, `${baseName} - Sertifikat Gabungan.pdf`);
+            notifications.show(`PDF gabungan ${records.length} sertifikat berhasil dibuat.`, {
+                severity: 'success',
+                autoHideDuration: 5000,
+            });
+        } catch (cause: unknown) {
+            const message = cause instanceof Error ? cause.message : 'PDF gabungan tidak dapat dibuat.';
+            setError(message);
+            notifications.show(message, { severity: 'error', autoHideDuration: 6500 });
+        } finally {
+            setIsGeneratingPdf(false);
+        }
+    };
+
+    const handleCopyPageSettings = async () => {
         if (!hasPageSettings) {
             notifications.show('Isi halaman khusus pada minimal satu alat terlebih dahulu.', {
                 severity: 'warning',
@@ -96,7 +145,7 @@ export default function CertificatePrintPage() {
         };
         const serialized = JSON.stringify(settings);
         const announceCopied = () => notifications.show(
-            `Pengaturan ${validCustomPageOverrides.length} alat disalin. Jalankan printer lokal dan pilih workbook yang sama.`,
+            `Backup ${validCustomPageOverrides.length} alat disalin ke clipboard.`,
             { severity: 'success', autoHideDuration: 5000 }
         );
 
@@ -114,7 +163,7 @@ export default function CertificatePrintPage() {
             const copied = document.execCommand('copy');
             textArea.remove();
             if (copied) announceCopied();
-            else notifications.show('Pengaturan tidak bisa disalin. Izinkan akses clipboard browser lalu coba lagi.', {
+            else notifications.show('Backup tidak bisa disalin. Izinkan akses clipboard browser lalu coba lagi.', {
                 severity: 'error',
                 autoHideDuration: 5000,
             });
@@ -130,16 +179,16 @@ export default function CertificatePrintPage() {
     );
 
     return (
-        <PageContainer title="Atur Halaman Cetak Sertifikat" icon={pageIcon}>
+        <PageContainer title="PDF Sertifikat Gabungan" icon={pageIcon}>
             <p className="mb-6 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
-                Centang alat yang perlu halaman khusus: jumlahnya otomatis 4 dan bisa diubah per alat. Alat yang tidak dicentang mengikuti total halaman dari Excel.
+                Unggah workbook Excel, lalu Easywork membuat satu PDF berisi sertifikat semua alat dengan tata letak dari sheet Sertifikat. Proses berjalan di browser; file tidak dikirim ke server.
             </p>
 
             <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-lg font-bold text-slate-900">1. Unggah file Excel</h2>
-                        <p className="mt-1 text-sm text-slate-500">Pilih workbook .xlsx yang memiliki sheet REKAP dan Sertifikat.</p>
+                        <p className="mt-1 text-sm text-slate-500">Pilih workbook .xlsx yang memiliki sheet REKAP dan Sertifikat. Bisa ganti file kapan saja.</p>
                     </div>
                     <div>
                         <input
@@ -149,8 +198,9 @@ export default function CertificatePrintPage() {
                             className="sr-only"
                             aria-label="Pilih workbook sertifikat"
                             onChange={(event) => void handleFile(event.target.files?.[0])}
+                            disabled={isGeneratingPdf}
                         />
-                        <Button type="button" loading={isLoading} onClick={() => inputRef.current?.click()}>
+                        <Button type="button" loading={isLoading} disabled={isGeneratingPdf} onClick={() => inputRef.current?.click()}>
                             {fileName ? 'Ganti file Excel' : 'Pilih file Excel'}
                         </Button>
                     </div>
@@ -169,8 +219,8 @@ export default function CertificatePrintPage() {
                 <section className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                            <h2 className="text-lg font-bold text-slate-900">2. Atur halaman khusus</h2>
-                            <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-500">Centang alat yang perlu halaman khusus; otomatis terisi 4 dan angkanya bisa diubah. Alat yang tidak dicentang tetap mengikuti Excel. No. Label yang sama dibedakan berdasarkan Nama Alat dan baris REKAP.</p>
+                            <h2 className="text-lg font-bold text-slate-900">2. Halaman khusus (opsional)</h2>
+                            <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-500">Kalau total halaman di footer sertifikat perlu berbeda untuk alat tertentu, centang lalu ubah angkanya. Alat lain mengikuti angka pada Excel. No. Label yang sama dibedakan berdasarkan Nama Alat dan baris REKAP.</p>
                         </div>
                         <span className="rounded-full bg-teal-50 px-3 py-1.5 text-sm font-semibold text-teal-900">
                             {`${validCustomPageOverrides.length} alat custom`}
@@ -182,6 +232,7 @@ export default function CertificatePrintPage() {
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
                             placeholder="Cari No. Label / nama alat / no. seri"
+                            disabled={isGeneratingPdf}
                             className="min-w-0 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 sm:w-96"
                         />
                         <span className="text-sm text-slate-500">Menampilkan {visibleRecords.length} dari {records.length} alat</span>
@@ -198,6 +249,7 @@ export default function CertificatePrintPage() {
                                     <input
                                         type="checkbox"
                                         checked={Boolean(customPageTotals[record.id]?.trim())}
+                                        disabled={isGeneratingPdf}
                                         onChange={(event) => {
                                             const checked = event.target.checked;
                                             setCustomPageTotals((current) => {
@@ -227,7 +279,7 @@ export default function CertificatePrintPage() {
                                         return next;
                                     })}
                                     placeholder="Excel"
-                                    disabled={!customPageTotals[record.id]?.trim()}
+                                    disabled={!customPageTotals[record.id]?.trim() || isGeneratingPdf}
                                     className="w-full rounded-lg border border-slate-200 px-2.5 py-2 text-center text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-700 focus:ring-4 focus:ring-teal-700/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
                                 />
                             </div>
@@ -236,15 +288,76 @@ export default function CertificatePrintPage() {
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center gap-3">
-                        <Button type="button" disabled={!hasPageSettings || invalidCustomPageOverrideCount > 0} onClick={() => void handleCopyPageSettings()}>
-                            Salin pengaturan ke clipboard
+                        <Button type="button" loading={isGeneratingPdf} disabled={!workbook || isLoading || invalidCustomPageOverrideCount > 0} onClick={() => void handleCreatePdf()}>
+                            {isGeneratingPdf ? `Membuat PDF ${pdfProgress.completed}/${pdfProgress.total}` : 'Buat PDF Gabungan'}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={!workbook || isLoading || !hasPageSettings || invalidCustomPageOverrideCount > 0}
+                            onClick={() => void handleCopyPageSettings()}
+                            startIcon={(
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 8V5a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2h-3M6 8h7a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2v-9a2 2 0 012-2z" />
+                                </svg>
+                            )}
+                        >
+                            Salin backup pengaturan
                         </Button>
                         <span className="text-sm text-slate-500">
                             {invalidCustomPageOverrideCount > 0
                                 ? `Perbaiki ${invalidCustomPageOverrideCount} isian (angka 1–999).`
-                                : 'Jalankan printer lokal di komputer yang sama setelah menyalin.'}
+                                : hasPageSettings
+                                    ? `Backup menyalin pengaturan halaman custom untuk ${validCustomPageOverrides.length} alat.`
+                                    : `Semua ${records.length} sertifikat masuk ke PDF. Atur satu halaman custom untuk mengaktifkan backup.`}
                         </span>
                     </div>
+
+                    {isGeneratingPdf && (
+                        <div className="relative mt-5 overflow-hidden rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 via-white to-cyan-50 p-5 shadow-sm sm:p-6" role="region" aria-label="Progres pembuatan PDF">
+                            <div className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-cyan-200/40 blur-3xl" />
+                            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
+                                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-700 text-white shadow-lg shadow-teal-800/20">
+                                    <svg className="h-7 w-7 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M7 3.75h7l5 5v11.5a1.5 1.5 0 01-1.5 1.5h-10A1.5 1.5 0 016 20.25V5.25a1.5 1.5 0 011.5-1.5zM14 4v5h5M9 13h6m-6 4h6" />
+                                    </svg>
+                                    <span className="absolute -right-1 -top-1 h-3.5 w-3.5 animate-ping rounded-full bg-amber-400" />
+                                    <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-amber-400 ring-2 ring-white" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 className="text-base font-bold text-slate-900">Lagi merapikan tumpukan sertifikat</h3>
+                                        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">Sebentar lagi</span>
+                                    </div>
+                                    <p className="mt-1 text-sm text-slate-600" aria-live="polite">{pdfProgressMessage}</p>
+                                </div>
+                                <div className="flex shrink-0 items-baseline gap-1.5 sm:flex-col sm:items-end sm:gap-0">
+                                    <span className="text-2xl font-black tabular-nums text-teal-800">{pdfProgressPercent}%</span>
+                                    <span className="text-xs font-medium text-slate-500">selesai</span>
+                                </div>
+                            </div>
+
+                            <div
+                                className="relative mt-5 h-3 overflow-hidden rounded-full bg-teal-100"
+                                role="progressbar"
+                                aria-label="Progres pembuatan PDF"
+                                aria-valuemin={0}
+                                aria-valuemax={pdfProgress.total}
+                                aria-valuenow={pdfProgress.completed}
+                            >
+                                <div
+                                    className="h-full rounded-full bg-gradient-to-r from-teal-600 via-emerald-500 to-cyan-500 transition-[width] duration-500 ease-out"
+                                    style={{ width: `${pdfProgressPercent}%` }}
+                                >
+                                    <div className="h-full w-full animate-pulse rounded-full bg-white/20" />
+                                </div>
+                            </div>
+                            <div className="relative mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-medium text-slate-500">
+                                <span>{pdfProgress.completed} dari {pdfProgress.total} sertifikat dirapikan</span>
+                                <span>{pdfProgress.completed === pdfProgress.total ? 'Sebentar lagi, unduhan siap.' : 'Workbook tetap di perangkat ini'}</span>
+                            </div>
+                        </div>
+                    )}
                 </section>
             )}
         </PageContainer>

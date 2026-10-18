@@ -2,11 +2,11 @@
 
 Easywork frontend built with React, TypeScript, and Vite.
 
-## Atur halaman cetak sertifikat
+## PDF sertifikat gabungan
 
-Menu **Atur Halaman Sertifikat** membaca workbook `.xlsx` yang memiliki sheet `REKAP` dan `Sertifikat`. Centang alat tertentu untuk mengatur halaman khusus; jumlahnya otomatis terisi 4 dan masih bisa diubah untuk alat tersebut. Alat yang tidak dicentang mengikuti total halaman di Excel. Salin pengaturannya ke clipboard.
+Menu **PDF Sertifikat Gabungan** membaca workbook `.xlsx` yang memiliki sheet `REKAP` dan `Sertifikat`. Easywork mengisi template Sertifikat untuk setiap alat, lalu menyatukan semuanya menjadi satu PDF. Proses pembuatan PDF berjalan di browser dan tidak mengubah atau mengunggah workbook.
 
-Jalankan paket **Cetak Sertifikat** di komputer yang sama dan pilih workbook yang sama. Paket lokal membaca pengaturan dari clipboard, memakai nilai di Excel untuk alat yang tidak diatur khusus, lalu membuat satu PDF gabungan. File Excel asli tidak diubah.
+Pengguna dapat mengatur total halaman khusus per alat; alat lainnya mengikuti angka di workbook. Setiap file Excel dapat diunggah ulang saat data berubah.
 
 ## Pengembangan
 
