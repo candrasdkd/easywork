@@ -26,6 +26,8 @@
   line-height: 1.5;
   color: #182a31;
   background: #f4f7f8;
+  --cursor-default: url("/cursors/cursor-arrow.svg") 3 2, auto;
+  --cursor-interactive: url("/cursors/cursor-hand.svg") 11 5, pointer;
 }
 
 * {
@@ -36,10 +38,31 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  cursor: var(--cursor-default);
   background:
     radial-gradient(ellipse at 82% -12%, rgb(215 236 235 / 38%), transparent 34rem),
     #f4f7f8;
   color: #182a31;
+}
+
+:where(
+  a[href],
+  button:not(:disabled),
+  [role="button"],
+  [role="link"],
+  summary,
+  label[for],
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled)
+) {
+  cursor: var(--cursor-interactive);
+}
+
+.cursor-pointer {
+  cursor: var(--cursor-interactive);
 }
 
 button,

@@ -27,13 +27,13 @@ const restoredFileKeys = new WeakMap<File, string>();
 let nextManualFileId = 0;
 
 const previewFieldColumns: Array<{ field: CertificateField; label: string }> = [
+    { field: 'brand', label: 'Merk' },
+    { field: 'type', label: 'Tipe / Model' },
+    { field: 'serialNumber', label: 'No. Seri' },
     { field: 'capacity', label: 'Kapasitas' },
     { field: 'accuracy', label: 'Tingkat Ketelitian' },
     { field: 'method', label: 'MK' },
     { field: 'owner', label: 'Milik / Pemilik' },
-    { field: 'brand', label: 'Merk' },
-    { field: 'type', label: 'Tipe / Model' },
-    { field: 'serialNumber', label: 'No. Seri' },
     { field: 'room', label: 'Ruangan' },
     { field: 'receivedDate', label: 'Tanggal Penerimaan' },
     { field: 'performedDate', label: 'Tanggal Pelaksanaan' },
@@ -182,8 +182,16 @@ export default function CertificateMasterPage() {
     const persistenceRevision = React.useRef(0);
     const [columnWidths, setColumnWidths] = React.useState(loadPreviewColumnWidths);
     const previewTableRef = React.useRef<HTMLTableElement | null>(null);
+    const previewScrollRef = React.useRef<HTMLDivElement | null>(null);
     const resizeCleanup = React.useRef<(() => void) | null>(null);
     const totalColumnWidth = previewColumnKeys.reduce((sum, key) => sum + columnWidths[key], 0);
+
+    const scrollPreviewHorizontally = React.useCallback((direction: 'left' | 'right') => {
+        const container = previewScrollRef.current;
+        if (!container) return;
+        const distance = Math.max(240, container.clientWidth * 0.75);
+        container.scrollBy({ left: direction === 'left' ? -distance : distance, behavior: 'smooth' });
+    }, []);
 
     const updateColumnWidth = React.useCallback((column: PreviewColumnKey, width: number) => {
         const nextWidths = { ...columnWidths, [column]: clampPreviewColumnWidth(column, width) };
@@ -977,7 +985,18 @@ export default function CertificateMasterPage() {
                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Pencocokan memakai No. Label, Nama Alat, Merk, Tipe, dan No. Seri. Kalau nilai beda, pilih <strong>Pertahankan MASTER</strong> atau <strong>Pakai LK</strong>. Edit nilai langsung dengan klik sel; hasil yang sudah dicek akan berwarna hijau. Tarik batas kanan judul kolom untuk mengubah lebarnya; ukuran tersimpan di browser.</p>
                             <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400"><strong>MASTER</strong> adalah nilai pada tabel; <strong>LK</strong> adalah nilai dari laporan hasil di kotak abu-abu.</p>
                         </div>
-                        <div className="max-h-[95vh] overflow-auto">
+                        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-2 dark:border-slate-800">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Geser tabel ke samping:</span>
+                            <div className="flex gap-2">
+                                <Button type="button" variant="outline" size="sm" aria-label="Geser tabel ke kiri" onClick={() => scrollPreviewHorizontally('left')}>
+                                    ← Kiri
+                                </Button>
+                                <Button type="button" variant="outline" size="sm" aria-label="Geser tabel ke kanan" onClick={() => scrollPreviewHorizontally('right')}>
+                                    Kanan →
+                                </Button>
+                            </div>
+                        </div>
+                        <div ref={previewScrollRef} className="max-h-[95vh] overflow-auto">
                             <table ref={previewTableRef} className="table-fixed w-full text-left text-xs" style={{ minWidth: `${totalColumnWidth}px` }}>
                                 <colgroup>
                                     {previewColumnKeys.map((column) => (
