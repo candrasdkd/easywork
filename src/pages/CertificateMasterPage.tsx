@@ -119,11 +119,13 @@ function formatDateKey(dateKey: string): string {
     }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
-function getMissingSourceMeasurementLabels(row: CertificatePreviewRow): string[] {
+function getMissingSourceFields(row: CertificatePreviewRow): CertificateField[] {
     if (row.matchedOn.length === 0 || row.ambiguousLabelMatch || row.ambiguousSourceMatch || row.sourceAlreadyUsed) return [];
-    return (['capacity', 'accuracy'] as const)
-        .filter((field) => !row.sourceValues?.[field] && !row.conflicts.includes(field))
-        .map((field) => previewFieldLabels[field]);
+    const fields: CertificateField[] = [
+        'capacity', 'accuracy', 'method', 'owner', 'brand', 'type', 'serialNumber',
+        'room', 'receivedDate', 'performedDate',
+    ];
+    return fields.filter((field) => !row.sourceValues?.[field] && !row.conflicts.includes(field));
 }
 
 interface ResizableHeaderCellProps {
@@ -530,6 +532,7 @@ export default function CertificateMasterPage() {
     const handleMasterUpload = React.useCallback(async (file: File | undefined) => {
         if (!file) return;
         clearResult();
+        setSourceFiles([]);
         setError('');
         try {
             const workbook = XLSX.read(await file.arrayBuffer(), {
@@ -867,6 +870,8 @@ export default function CertificateMasterPage() {
         const isEditedAndMatched = row.editedFields.includes(field) && row.matchedFields.includes(field);
         const isEditing = editingCell?.rowNumber === row.rowNumber && editingCell.field === field;
         const hasColumn = selectedLayout?.columns[field] !== undefined;
+        const isMissingSourceField = field !== 'label' && field !== 'equipmentName'
+            && getMissingSourceFields(row).includes(field);
         const baseCellClass = hasMismatch && !isConfirmed
             ? 'bg-rose-50 text-rose-800 dark:bg-rose-950/30 dark:text-rose-300'
             : isConfirmed || isEditedAndMatched
@@ -941,6 +946,9 @@ export default function CertificateMasterPage() {
                 {hasConflict && <span className="ml-1 block text-[11px] text-amber-700 dark:text-amber-300">Sumber bentrok</span>}
                 {!hasMismatch && isEmptyCertificateValue(value) && !isEmptyCertificateValue(sourceValue) && !hasConflict && (
                     <span className="ml-1 block break-words text-[11px] text-gray-500 dark:text-gray-400">LK {sourceValue}</span>
+                )}
+                {isMissingSourceField && (
+                    <span className="ml-1 block break-words text-[11px] text-amber-700 dark:text-amber-300">LK: — (tidak tercantum)</span>
                 )}
             </>
         );
@@ -1292,7 +1300,6 @@ export default function CertificateMasterPage() {
                                 </thead>
                                 <tbody>
                                     {result.previewRows.map((row) => {
-                                        const missingSourceMeasurements = getMissingSourceMeasurementLabels(row);
                                         return (
                                         <React.Fragment key={`${row.rowNumber}-${row.label}`}>
                                             <tr
@@ -1316,33 +1323,13 @@ export default function CertificateMasterPage() {
                                                             Dasar pencocokan awal: {(row.matchedOn ?? []).map((field) => previewFieldLabels[field]).join(' + ')}
                                                         </p>
                                                     )}
-                                                    {missingSourceMeasurements.length > 0 && (
-                                                        <p className="basis-full text-amber-700 dark:text-amber-300">
-                                                            Tidak tercantum di LK: {missingSourceMeasurements.join(', ')}
-                                                        </p>
-                                                    )}
                                                     {row.ambiguousLabelMatch && (
                                                         <p className="max-w-64 text-amber-800 dark:text-amber-300">
                                                             Ditemukan untuk: {row.candidateEquipmentNames.join(', ')}. Tidak diisi otomatis.
                                                         </p>
                                                     )}
-                                                    {row.conflicts.length > 0 && (
-                                                        <p className="basis-full text-rose-700 dark:text-rose-300">
-                                                            Sumber bentrok: {row.conflicts.map((field) => previewFieldLabels[field]).join(', ')}
-                                                        </p>
-                                                    )}
                                                     {row.mismatches.some((field) => !row.masterConfirmedFields.includes(field)) && (
-                                                        <>
-                                                            <span className="inline-flex rounded-full bg-rose-100 px-2 py-1 font-semibold text-rose-800 dark:bg-rose-500/10 dark:text-rose-300">Berbeda dari LK</span>
-                                                            <p className="basis-full text-rose-700 dark:text-rose-300">
-                                                                Perlu ditinjau: {row.mismatches.filter((field) => !row.masterConfirmedFields.includes(field)).map((field) => previewFieldLabels[field]).join(', ')}
-                                                            </p>
-                                                        </>
-                                                    )}
-                                                    {row.masterConfirmedFields.length > 0 && (
-                                                        <span className="basis-full text-emerald-700 dark:text-emerald-300">
-                                                            Perbedaan ditinjau · MASTER dipertahankan: {row.masterConfirmedFields.map((field) => previewFieldLabels[field]).join(', ')}
-                                                        </span>
+                                                        <span className="inline-flex rounded-full bg-rose-100 px-2 py-1 font-semibold text-rose-800 dark:bg-rose-500/10 dark:text-rose-300">Berbeda dari LK</span>
                                                     )}
                                                 </div>
                                             </td>

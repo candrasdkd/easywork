@@ -24,7 +24,7 @@ export type CertificatePreviewStatus =
     | 'Perlu cek'
     | `${number} kolom terisi`;
 
-export const CERTIFICATE_MATCHING_VERSION = 4;
+export const CERTIFICATE_MATCHING_VERSION = 8;
 
 export interface CertificateSourceRecord {
     label: string;
@@ -445,15 +445,61 @@ function getValueBesideLabel(rows: string[][], aliases: string[], includeMeasure
 }
 
 function extractEquipmentNameFromTitle(rows: string[][]): string {
-    for (const row of rows.slice(0, 14)) {
-        for (const cell of row) {
-            const title = toText(cell).replace(/\s+/g, ' ');
-            if (!/laporan\s+hasil/i.test(title) || !/kalibrasi/i.test(title)) continue;
-            const match = title.match(/\bkalibrasi\b\s*[:/-]?\s*(.+)$/i);
-            if (match?.[1]) return match[1].trim().replace(/[.,;]+$/, '');
-        }
+    for (const row of rows.slice(0, 24)) {
+        const title = row.map(toText).filter(Boolean).join(' ').replace(/\s+/g, ' ');
+        if (!/laporan\s+hasil/i.test(title) || !/kalibrasi/i.test(title)) continue;
+        const match = title.match(/\bkalibrasi\b\s*[:/-]?\s*(.+)$/i);
+        if (match?.[1]) return match[1].trim().replace(/[.,;]+$/, '');
     }
     return '';
+}
+
+function reportRecordCompleteness(record: CertificateSourceRecord): number {
+    const fields: CertificateField[] = [
+        'capacity', 'accuracy', 'method', 'owner', 'brand', 'type', 'serialNumber',
+        'room', 'receivedDate', 'performedDate',
+    ];
+    return fields.filter((field) => !isMissingReportValue(record[field])).length;
+}
+
+function reportTitleMatchesSourceName(record: CertificateSourceRecord, sourceName: string): number {
+    const normalizeToken = (token: string) => token.toLocaleLowerCase('id-ID') === 'laboratory' ? 'lab' : token.toLocaleLowerCase('id-ID');
+    const sourceTokens = new Set((sourceName.match(/[a-z]+/gi) ?? []).map(normalizeToken));
+    const titleTokens = new Set((record.equipmentName.match(/[a-z]+/gi) ?? []).map(normalizeToken));
+    return [...titleTokens].filter((token) => sourceTokens.has(token)).length;
+}
+
+function reportSheetsDescribeSameInstrument(records: CertificateSourceRecord[]): boolean {
+    const identityFields = ['brand', 'type', 'serialNumber'] as const;
+    return records.every((record) => records.every((other) => identityFields.every((field) => {
+        const value = record[field];
+        const otherValue = other[field];
+        if (!value || !otherValue) return true;
+        return field === 'serialNumber'
+            ? normalizeIdentifier(value) === normalizeIdentifier(otherValue)
+            : normalizeText(value) === normalizeText(otherValue);
+    })));
+}
+
+function resolveDuplicateReportSheets(records: CertificateSourceRecord[], sourceName: string): CertificateSourceRecord[] {
+    const recordsByLabel = new Map<string, CertificateSourceRecord[]>();
+    records.forEach((record) => {
+        const key = normalizeIdentifier(record.label);
+        const matches = recordsByLabel.get(key);
+        if (matches) matches.push(record);
+        else recordsByLabel.set(key, [record]);
+    });
+
+    return [...recordsByLabel.values()].flatMap((sameLabelRecords) => {
+        if (sameLabelRecords.length < 2 || !reportSheetsDescribeSameInstrument(sameLabelRecords)) {
+            return sameLabelRecords;
+        }
+        const bestRecord = [...sameLabelRecords].sort((left, right) =>
+            reportTitleMatchesSourceName(right, sourceName) - reportTitleMatchesSourceName(left, sourceName)
+            || reportRecordCompleteness(right) - reportRecordCompleteness(left),
+        )[0];
+        return bestRecord ? [bestRecord] : [];
+    });
 }
 
 function extractMethodFromRows(rows: string[][]): string {
@@ -471,72 +517,9 @@ function extractMethodFromRows(rows: string[][]): string {
     return '';
 }
 
-function readTabularField(
-    row: string[],
-    columns: Partial<MasterColumnMap>,
-    field: CertificateField,
-): string {
-    const column = columns[field];
-    if (column === undefined) return '';
-    const value = toText(row[column]);
-    return field === 'capacity' || field === 'accuracy'
-        ? appendAdjacentMeasurementUnit(row, column, value)
-        : value;
-}
-
-function readMethodCode(value: string): string {
-    return value.match(/^\s*(MKC-MK-[A-Z0-9]+(?:[-./][A-Z0-9]+)*)\b/i)?.[1] ?? '';
-}
-
-function findTabularRecords(
-    rows: string[][],
-    sourceName: string,
-    sourceId: string,
-    sourceSheet: string,
-    method: string,
-): CertificateSourceRecord[] {
-    const records: CertificateSourceRecord[] = [];
-
-    rows.forEach((row, headerRow) => {
-        const columns: Partial<MasterColumnMap> = {};
-        row.forEach((cell, column) => {
-            (Object.keys(FIELD_HEADERS) as Array<keyof MasterColumnMap>).forEach((field) => {
-                if (columns[field] === undefined && matchesHeader(cell, field)) columns[field] = column;
-            });
-        });
-        if (columns.label === undefined || columns.equipmentName === undefined) return;
-
-        for (let rowIndex = headerRow + 1; rowIndex < rows.length; rowIndex += 1) {
-            const data = rows[rowIndex];
-            const label = toText(data[columns.label]);
-            const equipmentName = toText(data[columns.equipmentName]);
-            if (!label || !equipmentName || isMissingReportValue(label) || isMissingReportValue(equipmentName)) continue;
-            records.push({
-                label,
-                equipmentName,
-                capacity: readTabularField(data, columns, 'capacity'),
-                accuracy: readTabularField(data, columns, 'accuracy'),
-                method: readMethodCode(readTabularField(data, columns, 'method')) || method,
-                owner: readTabularField(data, columns, 'owner'),
-                brand: readTabularField(data, columns, 'brand'),
-                type: readTabularField(data, columns, 'type'),
-                serialNumber: readTabularField(data, columns, 'serialNumber'),
-                room: readTabularField(data, columns, 'room'),
-                receivedDate: readTabularField(data, columns, 'receivedDate'),
-                performedDate: readTabularField(data, columns, 'performedDate'),
-                sourceName,
-                sourceId,
-                sourceSheet,
-            });
-        }
-    });
-
-    return records;
-}
-
 function isReportSheet(sheetName: string): boolean {
     const normalized = normalizeText(sheetName);
-    return normalized.startsWith('laporanhasil') || normalized.startsWith('laphasil');
+    return normalized.startsWith('laporanhasil');
 }
 
 export function readSourceReportWorkbook(workbook: XLSX.WorkBook, sourceName: string, sourceId = sourceName): CertificateSourceRecord[] {
@@ -548,18 +531,13 @@ export function readSourceReportWorkbook(workbook: XLSX.WorkBook, sourceName: st
         if (!sheet) return;
         const rows = getRows(sheet);
         const method = extractMethodFromRows(rows);
-        const tableRecords = findTabularRecords(rows, sourceName, sourceId, sheetName, method);
-        records.push(...tableRecords);
-
         const label = getValueBesideLabel(rows, REPORT_FIELD_HEADERS.label);
-        // The main equipment name is in the report title. A later measurement
-        // table can also contain a "Nama Alat" header for calibration standards
-        // (where the adjacent value may be "Merk"), so use that field only as
-        // a fallback when the title does not identify the equipment.
-        const equipmentName = extractEquipmentNameFromTitle(rows)
-            || getValueBesideLabel(rows, REPORT_FIELD_HEADERS.equipmentName);
+        // Read the customer instrument from the report title only. Other sheets
+        // and tables can contain the LK template or calibration standards, not
+        // the instrument being certified.
+        const equipmentName = extractEquipmentNameFromTitle(rows);
 
-        if (!label || !equipmentName) return;
+        if (!label || isMissingReportValue(label) || !equipmentName) return;
         records.push({
             label,
             equipmentName,
@@ -579,7 +557,10 @@ export function readSourceReportWorkbook(workbook: XLSX.WorkBook, sourceName: st
         });
     });
 
-    return records.filter((record) => record.label && record.equipmentName && !isMissingReportValue(record.label));
+    return resolveDuplicateReportSheets(
+        records.filter((record) => record.label && record.equipmentName && !isMissingReportValue(record.label)),
+        sourceName,
+    );
 }
 
 function getCellDisplay(sheet: XLSX.WorkSheet, row: number, column: number, fallback: unknown): string {
