@@ -24,7 +24,7 @@ export type CertificatePreviewStatus =
     | 'Perlu cek'
     | `${number} kolom terisi`;
 
-export const CERTIFICATE_MATCHING_VERSION = 3;
+export const CERTIFICATE_MATCHING_VERSION = 4;
 
 export interface CertificateSourceRecord {
     label: string;
@@ -459,33 +459,15 @@ function extractEquipmentNameFromTitle(rows: string[][]): string {
 function extractMethodFromRows(rows: string[][]): string {
     const codePattern = /\bMKC-MK-[A-Z0-9]+(?:[-./][A-Z0-9]+)*/i;
 
-    // Prefer a code written in the same cell as "Metode Kerja". Some report
-    // templates also put a form code beside a generic "Metode Kerja MK:" label.
+    // The method code may appear anywhere in a report sheet, so find its
+    // distinctive prefix directly instead of depending on a nearby label.
     for (const row of rows) {
         for (const cell of row) {
-            const methodIndex = cell.search(/metode\s+kerja/i);
-            if (methodIndex < 0) continue;
-            const afterMethod = cell.slice(methodIndex + 'metode kerja'.length);
-            const code = afterMethod.match(codePattern)?.[0];
+            const code = cell.match(codePattern)?.[0];
             if (code) return code.replace(/[.,;:]+$/, '');
         }
     }
 
-    // Also handle a two-cell "Metode Kerja" label/value pair, while avoiding
-    // rows whose label explicitly ends with "MK:" (a separate form-code field).
-    for (const row of rows) {
-        for (let column = 0; column < row.length; column += 1) {
-            const labelCell = row[column];
-            const methodIndex = labelCell.search(/metode\s+kerja/i);
-            if (methodIndex < 0) continue;
-            const tail = labelCell.slice(methodIndex + 'metode kerja'.length).trim();
-            if (/^mk\s*[:：]?$/i.test(tail)) continue;
-            for (let offset = 1; offset <= 8 && column + offset < row.length; offset += 1) {
-                const candidate = row[column + offset].match(/^\s*(MKC-MK-[A-Z0-9]+(?:[-./][A-Z0-9]+)*)\b/i)?.[1];
-                if (candidate) return candidate.replace(/[.,;:]+$/, '');
-            }
-        }
-    }
     return '';
 }
 
