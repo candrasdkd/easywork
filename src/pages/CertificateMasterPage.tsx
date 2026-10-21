@@ -15,6 +15,7 @@ import {
     suggestMasterSheet,
     type CertificateField,
     type CertificateFillResult,
+    type CertificatePreviewRow,
     type PreviewField,
 } from '../lib/certificateMaster';
 import {
@@ -116,6 +117,13 @@ function formatDateKey(dateKey: string): string {
         year: 'numeric',
         timeZone: 'UTC',
     }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
+function getMissingSourceMeasurementLabels(row: CertificatePreviewRow): string[] {
+    if (row.matchedOn.length === 0 || row.ambiguousLabelMatch || row.ambiguousSourceMatch || row.sourceAlreadyUsed) return [];
+    return (['capacity', 'accuracy'] as const)
+        .filter((field) => !row.sourceValues?.[field] && !row.conflicts.includes(field))
+        .map((field) => previewFieldLabels[field]);
 }
 
 interface ResizableHeaderCellProps {
@@ -1283,7 +1291,9 @@ export default function CertificateMasterPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {result.previewRows.map((row) => (
+                                    {result.previewRows.map((row) => {
+                                        const missingSourceMeasurements = getMissingSourceMeasurementLabels(row);
+                                        return (
                                         <React.Fragment key={`${row.rowNumber}-${row.label}`}>
                                             <tr
                                                 className={`border-t border-gray-100 align-top dark:border-slate-800 ${row.editedFields.length > 0 || row.masterConfirmedFields.length > 0 ? 'bg-emerald-50/70 dark:bg-emerald-950/20' : ''}`}
@@ -1304,6 +1314,11 @@ export default function CertificateMasterPage() {
                                                     {(row.matchedOn ?? []).length > 0 && (
                                                         <p className="basis-full text-gray-500 dark:text-gray-400">
                                                             Dasar pencocokan awal: {(row.matchedOn ?? []).map((field) => previewFieldLabels[field]).join(' + ')}
+                                                        </p>
+                                                    )}
+                                                    {missingSourceMeasurements.length > 0 && (
+                                                        <p className="basis-full text-amber-700 dark:text-amber-300">
+                                                            Tidak tercantum di LK: {missingSourceMeasurements.join(', ')}
                                                         </p>
                                                     )}
                                                     {row.ambiguousLabelMatch && (
@@ -1334,7 +1349,8 @@ export default function CertificateMasterPage() {
                                             <td className="max-w-56 px-3 py-2 text-gray-500 dark:text-gray-400" title={row.sourceNames.join(', ')}>{row.sourceNames.join(', ') || '—'}</td>
                                             </tr>
                                         </React.Fragment>
-                                    ))}
+                                        );
+                                    })}
                                     {result.previewRows.length === 0 && (
                                         <tr><td colSpan={previewFieldColumns.length + 5} className="px-4 py-12 text-center text-gray-500">Tidak menemukan baris alat pada sheet yang dipilih.</td></tr>
                                     )}
