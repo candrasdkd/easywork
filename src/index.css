@@ -26,8 +26,8 @@
   line-height: 1.5;
   color: #182a31;
   background: #f4f7f8;
-  --cursor-default: url("/cursors/cursor-arrow.svg") 3 2, auto;
-  --cursor-interactive: url("/cursors/cursor-hand.svg") 11 5, pointer;
+  --cursor-default: url("/cursors/cursor-arrow.svg") 2 1, auto;
+  --cursor-interactive: url("/cursors/cursor-hand.svg") 7 3, pointer;
 }
 
 * {

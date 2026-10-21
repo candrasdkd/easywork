@@ -24,6 +24,8 @@ export type CertificatePreviewStatus =
     | 'Perlu cek'
     | `${number} kolom terisi`;
 
+export const CERTIFICATE_MATCHING_VERSION = 3;
+
 export interface CertificateSourceRecord {
     label: string;
     equipmentName: string;
@@ -99,6 +101,7 @@ export interface CertificatePreviewRow {
 }
 
 export interface CertificateFillResult {
+    matchingVersion?: number;
     previewRows: CertificatePreviewRow[];
     matchedRows: number;
     labelOnlyRows: number;
@@ -149,7 +152,7 @@ const REQUIRED_MASTER_FIELDS: RequiredMasterField[] = [
 const FIELD_HEADERS: Record<keyof MasterColumnMap, string[]> = {
     ...COMMON_FIELD_HEADERS,
     method: ['mk', 'metodekerja', 'metodekalibrasi', 'method'],
-    owner: ['milik', 'namapemilik', 'pemilik', 'owner'],
+    owner: ['milik', 'pemilik', 'milikpemilik', 'pemilikmilik', 'namamilik', 'namapemilik', 'owner'],
     brand: ['merk', 'merek', 'brand'],
     type: ['tipemodel', 'tipe', 'model', 'type'],
     serialNumber: ['noseri', 'nomorseri', 'nomerseri', 'serialnumber', 'serialno', 'sn'],
@@ -164,7 +167,7 @@ type ReportHeaderField = CertificateField | 'label' | 'equipmentName' | 'issueDa
 const REPORT_FIELD_HEADERS: Record<ReportHeaderField, string[]> = {
     ...COMMON_FIELD_HEADERS,
     method: ['metodekerja', 'metodekalibrasi', 'method'],
-    owner: ['namapemilik', 'milik', 'pemilik', 'owner'],
+    owner: ['namapemilik', 'milik', 'pemilik', 'milikpemilik', 'pemilikmilik', 'namamilik', 'owner'],
     brand: ['merk', 'merek', 'brand'],
     type: ['tipe', 'tipemodel', 'model', 'type'],
     serialNumber: ['noseri', 'nomorseri', 'nomerseri', 'serialnumber', 'serialno', 'sn'],
@@ -242,7 +245,7 @@ function dateKey(value: string): string | null {
         .replace(/,/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-    const yearFirst = normalized.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/);
+    const yearFirst = normalized.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})(?:$|t|\s)/);
     if (yearFirst) return `${yearFirst[1]}-${yearFirst[2].padStart(2, '0')}-${yearFirst[3].padStart(2, '0')}`;
 
     const numeric = normalized.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
@@ -257,6 +260,17 @@ function dateKey(value: string): string | null {
     if (!day || !year) return null;
     const month = String(MONTH_NUMBERS[parts[monthIndex]]);
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
+
+export function certificateDateKey(value: unknown): string | null {
+    if (value instanceof Date && Number.isFinite(value.getTime())) {
+        return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        const parsed = XLSX.SSF.parse_date_code(value) as { y: number; m: number; d: number } | null;
+        if (parsed) return `${parsed.y}-${String(parsed.m).padStart(2, '0')}-${String(parsed.d).padStart(2, '0')}`;
+    }
+    return dateKey(toText(value));
 }
 
 export function certificateFieldValuesMatch(field: CertificateField, masterValue: string, sourceValue: string): boolean {
@@ -443,7 +457,7 @@ function extractEquipmentNameFromTitle(rows: string[][]): string {
 }
 
 function extractMethodFromRows(rows: string[][]): string {
-    const codePattern = /\bMKC[A-Z0-9]*(?:[-./][A-Z0-9]+)*/i;
+    const codePattern = /\bMKC-MK-[A-Z0-9]+(?:[-./][A-Z0-9]+)*/i;
 
     // Prefer a code written in the same cell as "Metode Kerja". Some report
     // templates also put a form code beside a generic "Metode Kerja MK:" label.
@@ -467,7 +481,7 @@ function extractMethodFromRows(rows: string[][]): string {
             const tail = labelCell.slice(methodIndex + 'metode kerja'.length).trim();
             if (/^mk\s*[:：]?$/i.test(tail)) continue;
             for (let offset = 1; offset <= 8 && column + offset < row.length; offset += 1) {
-                const candidate = row[column + offset].match(/^\s*(MKC[A-Z0-9]*(?:[-./][A-Z0-9]+)*)\b/i)?.[1];
+                const candidate = row[column + offset].match(/^\s*(MKC-MK-[A-Z0-9]+(?:[-./][A-Z0-9]+)*)\b/i)?.[1];
                 if (candidate) return candidate.replace(/[.,;:]+$/, '');
             }
         }
@@ -486,6 +500,10 @@ function readTabularField(
     return field === 'capacity' || field === 'accuracy'
         ? appendAdjacentMeasurementUnit(row, column, value)
         : value;
+}
+
+function readMethodCode(value: string): string {
+    return value.match(/^\s*(MKC-MK-[A-Z0-9]+(?:[-./][A-Z0-9]+)*)\b/i)?.[1] ?? '';
 }
 
 function findTabularRecords(
@@ -516,7 +534,7 @@ function findTabularRecords(
                 equipmentName,
                 capacity: readTabularField(data, columns, 'capacity'),
                 accuracy: readTabularField(data, columns, 'accuracy'),
-                method: readTabularField(data, columns, 'method') || method,
+                method: readMethodCode(readTabularField(data, columns, 'method')) || method,
                 owner: readTabularField(data, columns, 'owner'),
                 brand: readTabularField(data, columns, 'brand'),
                 type: readTabularField(data, columns, 'type'),
@@ -1019,5 +1037,5 @@ export function fillMasterWorkbook(
         });
     });
 
-    return { previewRows, ...counters };
+    return { matchingVersion: CERTIFICATE_MATCHING_VERSION, previewRows, ...counters };
 }
