@@ -796,7 +796,7 @@ export default function CertificateMasterPage() {
                             delete blankCell.v;
                             delete blankCell.f;
                             delete blankCell.w;
-                            delete blankCell.t;
+                            blankCell.t = 'z';
                             exportSheet[destinationAddress] = blankCell;
                         }
                     } else if (destinationCell) {
@@ -804,7 +804,7 @@ export default function CertificateMasterPage() {
                         delete blankCell.v;
                         delete blankCell.f;
                         delete blankCell.w;
-                        delete blankCell.t;
+                        blankCell.t = 'z';
                         exportSheet[destinationAddress] = blankCell;
                     }
                 }
