@@ -234,9 +234,9 @@ export default function CertificateMasterPage() {
             const cell = layout.columns.performedDate === undefined
                 ? undefined
                 : sheet[XLSX.utils.encode_cell({ r: row.rowNumber - 1, c: layout.columns.performedDate })] as XLSX.CellObject | undefined;
-            const dateKey = certificateDateKey(cell?.v)
-                ?? certificateDateKey(cell?.w)
+            const dateKey = certificateDateKey(cell?.w)
                 ?? certificateDateKey(row.performedDate)
+                ?? certificateDateKey(cell?.v)
                 ?? NO_PERFORMED_DATE_KEY;
             counts.set(dateKey, (counts.get(dateKey) ?? 0) + 1);
         });
@@ -765,9 +765,9 @@ export default function CertificateMasterPage() {
                 const cell = layout.columns.performedDate === undefined
                     ? undefined
                     : sourceSheet[XLSX.utils.encode_cell({ r: row.rowNumber - 1, c: layout.columns.performedDate })] as XLSX.CellObject | undefined;
-                const date = certificateDateKey(cell?.v)
-                    ?? certificateDateKey(cell?.w)
+                const date = certificateDateKey(cell?.w)
                     ?? certificateDateKey(row.performedDate)
+                    ?? certificateDateKey(cell?.v)
                     ?? NO_PERFORMED_DATE_KEY;
                 return selectedDateKeys.has(date);
             });
