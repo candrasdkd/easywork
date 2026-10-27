@@ -532,6 +532,7 @@ export default function CertificateMasterPage() {
     const handleMasterUpload = React.useCallback(async (file: File | undefined) => {
         if (!file) return;
         clearResult();
+        setRestoredFromStorage(false);
         setSourceFiles([]);
         setError('');
         try {
@@ -1096,7 +1097,7 @@ export default function CertificateMasterPage() {
                             : storageStatus === 'error'
                                 ? `Autosave gagal: ${storageError}`
                                 : storageStatus === 'saved'
-                                    ? `${restoredFromStorage ? 'Sesi terakhir dipulihkan. ' : ''}Tersimpan otomatis di browser ini.`
+                                    ? `${restoredFromStorage ? 'Sesi dipulihkan dari file yang terakhir diunggah. Perubahan di file lokal belum terbaca; pilih ulang MASTER untuk memperbarui (file LK perlu dipilih kembali). ' : ''}Tersimpan otomatis di browser ini.`
                                     : 'Autosave aktif di browser ini.'}
                 </p>
             </div>
