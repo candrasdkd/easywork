@@ -14,6 +14,7 @@ export default function CertificatePrintPage() {
     const [records, setRecords] = React.useState<CertificateRecord[]>([]);
     const [fileName, setFileName] = React.useState('');
     const [customPageTotals, setCustomPageTotals] = React.useState<Record<string, string>>({});
+    const [typeKan, setTypeKan] = React.useState<Record<string, boolean>>({});
     const [search, setSearch] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false);
@@ -37,7 +38,8 @@ export default function CertificatePrintPage() {
     }), [customPageTotals, records]);
     const validCustomPageOverrides = customPageOverrides.filter((item) => item.pages !== null);
     const invalidCustomPageOverrideCount = customPageOverrides.length - validCustomPageOverrides.length;
-    const hasPageSettings = validCustomPageOverrides.length > 0;
+    const typeKanRecords = records.filter((record) => typeKan[record.id]);
+    const hasCopySettings = validCustomPageOverrides.length + typeKanRecords.length > 0;
     const pdfProgressPercent = pdfProgress.total > 0
         ? Math.round((pdfProgress.completed / pdfProgress.total) * 100)
         : 0;
@@ -72,6 +74,7 @@ export default function CertificatePrintPage() {
             setRecords(parsed.records);
             setFileName(file.name);
             setCustomPageTotals({});
+            setTypeKan({});
             setSearch('');
             notifications.show(`Berhasil membaca ${parsed.records.length} data alat.`, {
                 severity: 'success',
@@ -83,6 +86,7 @@ export default function CertificatePrintPage() {
             setRecords([]);
             setFileName('');
             setCustomPageTotals({});
+            setTypeKan({});
             setError(message);
         } finally {
             setIsLoading(false);
@@ -122,9 +126,9 @@ export default function CertificatePrintPage() {
         }
     };
 
-    const handleCopyPageSettings = async () => {
-        if (!hasPageSettings) {
-            notifications.show('Isi halaman khusus pada minimal satu alat terlebih dahulu.', {
+    const handleCopySettings = async () => {
+        if (!hasCopySettings) {
+            notifications.show('Pilih halaman custom atau tipe KAN pada minimal satu alat terlebih dahulu.', {
                 severity: 'warning',
                 autoHideDuration: 3500,
             });
@@ -136,16 +140,25 @@ export default function CertificatePrintPage() {
             version: 1,
             sourceFile: fileName,
             defaultPages: null,
-            overrides: validCustomPageOverrides.map(({ record, pages }) => ({
-                rekapRow: record.rekapRow,
-                label: record.fields.label,
-                equipment: record.fields.equipment,
-                pages,
-            })),
+            overrides: [
+                ...validCustomPageOverrides.map(({ record, pages }) => ({
+                    rekapRow: record.rekapRow,
+                    label: record.fields.label,
+                    equipment: record.fields.equipment,
+                    pages,
+                    isCustomePage: true,
+                })),
+                ...typeKanRecords.map((record) => ({
+                    rekapRow: record.rekapRow,
+                    label: record.fields.label,
+                    equipment: record.fields.equipment,
+                    isTypeKan: true,
+                })),
+            ],
         };
         const serialized = JSON.stringify(settings);
         const announceCopied = () => notifications.show(
-            `Backup ${validCustomPageOverrides.length} alat disalin ke clipboard.`,
+            `Backup ${validCustomPageOverrides.length + typeKanRecords.length} alat disalin ke clipboard.`,
             { severity: 'success', autoHideDuration: 5000 }
         );
 
@@ -219,11 +232,11 @@ export default function CertificatePrintPage() {
                 <section className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                            <h2 className="text-lg font-bold text-slate-900">2. Halaman khusus (opsional)</h2>
-                            <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-500">Kalau total halaman di footer sertifikat perlu berbeda untuk alat tertentu, centang lalu ubah angkanya. Alat lain mengikuti angka pada Excel. No. Label yang sama dibedakan berdasarkan Nama Alat dan baris REKAP.</p>
+                            <h2 className="text-lg font-bold text-slate-900">2. Pengaturan sertifikat (opsional)</h2>
+                            <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-500">Atur total halaman khusus atau tandai tipe KAN untuk setiap alat. Satu alat hanya bisa memakai salah satu pilihan; alat lain mengikuti angka pada Excel. No. Label yang sama dibedakan berdasarkan Nama Alat dan baris REKAP.</p>
                         </div>
                         <span className="rounded-full bg-teal-50 px-3 py-1.5 text-sm font-semibold text-teal-900">
-                            {`${validCustomPageOverrides.length} alat custom`}
+                            {`${validCustomPageOverrides.length} halaman custom · ${typeKanRecords.length} tipe KAN`}
                         </span>
                     </div>
 
@@ -240,7 +253,7 @@ export default function CertificatePrintPage() {
 
                     <div className="mt-3 max-h-[min(68vh,760px)] overflow-auto rounded-2xl border border-slate-100">
                         {visibleRecords.map((record) => (
-                            <div key={record.id} className="grid grid-cols-1 items-center gap-2 border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto_7rem] sm:gap-3">
+                            <div key={record.id} className="grid grid-cols-1 items-center gap-2 border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto_auto_7rem] sm:gap-3">
                                 <div className="min-w-0">
                                     <p className="truncate text-sm font-semibold text-slate-800">{record.fields.label || 'Tanpa No. Label'} · {record.fields.equipment || 'Nama alat kosong'}</p>
                                     <p className="truncate text-xs text-slate-500">{record.fields.brand || '-'} {record.fields.model ? `· ${record.fields.model}` : ''} {record.fields.serialNumber ? `· SN ${record.fields.serialNumber}` : ''}</p>
@@ -258,11 +271,31 @@ export default function CertificatePrintPage() {
                                                 else delete next[record.id];
                                                 return next;
                                             });
+                                            if (checked) setTypeKan((current) => ({ ...current, [record.id]: false }));
                                         }}
                                         className="h-4 w-4 accent-teal-700"
                                         aria-label={`Atur halaman khusus untuk ${record.fields.label} ${record.fields.equipment}`}
                                     />
                                     <span>Halaman custom (4)</span>
+                                </label>
+                                <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-xs font-medium text-slate-600">
+                                    <input
+                                        type="checkbox"
+                                        checked={Boolean(typeKan[record.id])}
+                                        disabled={isGeneratingPdf}
+                                        onChange={(event) => {
+                                            const checked = event.target.checked;
+                                            setTypeKan((current) => ({ ...current, [record.id]: checked }));
+                                            if (checked) setCustomPageTotals((current) => {
+                                                const next = { ...current };
+                                                delete next[record.id];
+                                                return next;
+                                            });
+                                        }}
+                                        className="h-4 w-4 accent-teal-700"
+                                        aria-label={`Tandai tipe KAN untuk ${record.fields.label} ${record.fields.equipment}`}
+                                    />
+                                    <span>Tipe KAN</span>
                                 </label>
                                 <label className="sr-only" htmlFor={`custom-pages-${record.id}`}>Total halaman khusus untuk {record.fields.label} {record.fields.equipment}</label>
                                 <input
@@ -294,8 +327,8 @@ export default function CertificatePrintPage() {
                         <Button
                             type="button"
                             variant="outline"
-                            disabled={!workbook || isLoading || !hasPageSettings || invalidCustomPageOverrideCount > 0}
-                            onClick={() => void handleCopyPageSettings()}
+                            disabled={!workbook || isLoading || !hasCopySettings || invalidCustomPageOverrideCount > 0}
+                            onClick={() => void handleCopySettings()}
                             startIcon={(
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 8V5a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2h-3M6 8h7a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2v-9a2 2 0 012-2z" />
@@ -307,9 +340,9 @@ export default function CertificatePrintPage() {
                         <span className="text-sm text-slate-500">
                             {invalidCustomPageOverrideCount > 0
                                 ? `Perbaiki ${invalidCustomPageOverrideCount} isian (angka 1–999).`
-                                : hasPageSettings
-                                    ? `Backup menyalin pengaturan halaman custom untuk ${validCustomPageOverrides.length} alat.`
-                                    : `Semua ${records.length} sertifikat masuk ke PDF. Atur satu halaman custom untuk mengaktifkan backup.`}
+                                : hasCopySettings
+                                    ? `Backup menyalin pengaturan halaman custom dan tipe KAN untuk ${validCustomPageOverrides.length + typeKanRecords.length} alat.`
+                                    : `Semua ${records.length} sertifikat masuk ke PDF. Pilih halaman custom atau tipe KAN untuk mengaktifkan backup.`}
                         </span>
                     </div>
 
